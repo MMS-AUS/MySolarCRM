@@ -559,6 +559,8 @@ export const fetchRecentGmailMessages = async (maxResults = 5): Promise<GmailMes
   return [...sentSummaries, ...defaultMessages];
 };
 
+import { sendSystemEmail, buildRfc822Base64UrlMessage } from './systemAlertsEmailService';
+
 export const sendGmailEmail = async ({
   to,
   subject,
@@ -576,42 +578,21 @@ export const sendGmailEmail = async ({
     throw new Error('Not authenticated with Google Workspace. Please sign in or connect your account.');
   }
 
-  // If live Google token, send via Gmail REST endpoint
-  if (token && token.startsWith('ya29.')) {
-    const rawEmailLines = [
-      `To: ${to}`,
-      `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`,
-      'MIME-Version: 1.0',
-      'Content-Type: text/html; charset=UTF-8',
-      'Content-Transfer-Encoding: 7bit',
-      '',
-      bodyHtml
-    ];
-    const rawEmail = rawEmailLines.join('\r\n');
-    const encodedEmail = btoa(unescape(encodeURIComponent(rawEmail)))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
+  // Use the upgraded universal system email dispatcher
+  const result = await sendSystemEmail({
+    to,
+    subject,
+    bodyHtml,
+    senderName,
+    category: 'Google Workspace Gmail'
+  });
 
-    const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ raw: encodedEmail })
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || `Failed to send email via Gmail: ${res.statusText}`);
-    }
-
-    return await res.json();
+  if (!result.success && result.status === 'failed') {
+    throw new Error(result.error || 'Failed to dispatch email via configured gateway.');
   }
 
-  // Store in sent items for connected account
-  const newId = `msg-${Date.now()}`;
+  // Also preserve in local sent items for immediate in-modal list view
+  const newId = result.messageId || `msg-${Date.now()}`;
   const sentItem = {
     id: newId,
     to,
@@ -630,8 +611,9 @@ export const sendGmailEmail = async ({
     console.error('Failed to save sent email:', e);
   }
 
-  return { id: newId, threadId: `th-${Date.now()}` };
+  return { id: newId, threadId: result.threadId || `th-${Date.now()}` };
 };
+
 
 // ==========================================
 // GOOGLE CALENDAR API INTEGRATION

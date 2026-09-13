@@ -1476,4 +1476,89 @@ export interface GmbInsightMetrics {
   reviewConversionRatePercent: number;
 }
 
+// System Alerts & Personal Email Integration Types
+export interface SystemAlertTriggerConfig {
+  newLeadAlert: boolean;
+  leadProposalSentAlert: boolean;
+  projectStageAlert: boolean;
+  installOrderDispatchedAlert: boolean;
+  serviceTicketAlert: boolean;
+  xeroInvoiceAlert: boolean;
+  staffInviteAlert: boolean;
+  stcClaimAlert: boolean;
+  customerPortalAlert: boolean;
+}
+
+export type EmailDeliveryMode = 'google_workspace' | 'custom_smtp' | 'webhook_gateway' | 'simulation_audit';
+
+export interface PersonalEmailIntegrationConfig {
+  deliveryMode: EmailDeliveryMode;
+  // SMTP Configuration
+  smtpHost: string;
+  smtpPort: number;
+  smtpUsername: string;
+  smtpPassword: string; // App password or SMTP password
+  smtpSecure: boolean;
+  // Webhook / Cloud Gateway Configuration
+  webhookUrl: string;
+  webhookApiKey: string;
+  webhookPayloadType: 'standard' | 'sendgrid' | 'resend' | 'mailgun';
+  // Personal Google OAuth token
+  customGoogleAccessToken?: string;
+  // Sender Identifiers
+  senderEmail: string;
+  senderName: string;
+  replyToEmail: string;
+  adminAlertEmails: string[];
+  // Automation Subscriptions
+  triggers: SystemAlertTriggerConfig;
+  sendInAppNotification: boolean;
+  sendBrowserPushNotification: boolean;
+  lastUpdated: string;
+}
+
+export interface OutboundEmailLog {
+  id: string;
+  timestamp: string;
+  to: string;
+  from: string;
+  subject: string;
+  snippet: string;
+  bodyHtml: string;
+  status: 'sent' | 'delivered' | 'failed' | 'simulated';
+  channel: 'gmail_api' | 'custom_smtp' | 'webhook_gateway' | 'system_relay';
+  category: string;
+  referenceId?: string;
+  errorMessage?: string;
+}
+
+export interface SystemAlertEvent {
+  type:
+    | 'new_lead'
+    | 'proposal_sent'
+    | 'project_milestone'
+    | 'install_dispatched'
+    | 'ticket_created'
+    | 'invoice_issued'
+    | 'payment_received'
+    | 'staff_invite'
+    | 'portal_access';
+  title: string;
+  recipientEmail: string;
+  recipientName: string;
+  ccEmails?: string[];
+  data: Record<string, any>;
+}
+
+export interface EmailSendResult {
+  success: boolean;
+  messageId: string;
+  threadId?: string;
+  status: 'sent' | 'delivered' | 'failed' | 'simulated';
+  channel: 'gmail_api' | 'custom_smtp' | 'webhook_gateway' | 'system_relay';
+  error?: string;
+  timestamp: string;
+}
+
+
 

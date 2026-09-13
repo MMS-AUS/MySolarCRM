@@ -83,6 +83,7 @@ import {
   formatAudAccounts,
   parseAudAccounts
 } from '../utils/australianPostcodes';
+import { dispatchSystemAlert, getPersonalEmailConfig } from '../services/systemAlertsEmailService';
 
 interface AppContextType {
   currentUser: UserProfile;
@@ -964,6 +965,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       read: false
     };
     setNotifications(prev => [newNotif, ...prev]);
+
+    // Send browser desktop notification if enabled
+    try {
+      const cfg = getPersonalEmailConfig();
+      if (cfg?.sendBrowserPushNotification && typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification(`Apex Solar ERP: ${notif.title}`, {
+            body: notif.message,
+            icon: '/favicon.ico'
+          });
+        }
+      }
+    } catch {
+      // ignore
+    }
   };
 
   const unreadNotificationsCount = notifications.filter(n => !n.read).length;
@@ -1041,6 +1057,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       message: `Workspace invite with password setup link sent to ${user.name} via ${channel === 'sms' ? `SMS (${user.phone})` : `Email (${user.email})`}.`,
       type: 'system'
     });
+
+    if (channel === 'email' && user.email) {
+      dispatchSystemAlert({
+        type: 'staff_invite',
+        title: `Welcome to Apex Solar ERP - Team Access Granted for ${user.name}`,
+        recipientEmail: user.email,
+        recipientName: user.name,
+        data: {
+          userName: user.name,
+          userEmail: user.email,
+          role: user.role,
+          inviteLink: inviteLink,
+          description: `You have been granted access to Apex Solar ERP with ${user.role} permissions. Please follow the link to initialize your workspace account and set your password.`
+        }
+      }).catch(e => console.warn('Staff invite alert dispatch failed:', e));
+    }
 
     return {
       success: true,
@@ -1500,6 +1532,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setLeads(prev => [newLead, ...prev]);
+
+    // Dispatch automated email alert for new incoming lead
+    const customerPrimaryEmail = newLead.email ? newLead.email.split(',')[0].trim() : '';
+    dispatchSystemAlert({
+      type: 'new_lead',
+      title: `New Solar Lead Received: ${fullName} (${newLead.systemSizeKw}kW - ${newLead.suburb || newLead.state})`,
+      recipientEmail: customerPrimaryEmail || 'akash.mohite@gmail.com',
+      recipientName: fullName,
+      data: {
+        customerName: fullName,
+        phone: cleanPrimaryMobile,
+        email: customerPrimaryEmail,
+        address: `${newLead.address || ''}, ${newLead.suburb || ''} ${st} ${pc}`.trim(),
+        systemSize: `${newLead.systemSizeKw} kW`,
+        assignedSalesRep: newLead.salesPersonName,
+        platform: newLead.platform,
+        sellingPrice: newLead.sellingPrice ? `$${newLead.sellingPrice}` : '$9,400 AUD',
+        description: `A new solar energy enquiry has been recorded in Apex Solar CRM from ${newLead.platform}. Immediate sales follow-up triggered.`
+      }
+    }).catch(e => console.warn('New lead alert dispatch failed:', e));
+
     return newLead;
   };
 
@@ -1545,6 +1598,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           },
           ...notifs
         ]);
+
+        // Dispatch official customer portal login email
+        dispatchSystemAlert({
+          type: 'portal_access',
+          title: `Your Apex Solar Customer Portal Access - ${merged.customerName}`,
+          recipientEmail: customerPrimaryEmail,
+          recipientName: merged.customerName || 'Valued Customer',
+          data: {
+            username: customerPrimaryEmail,
+            temporaryPassword: tempPass,
+            portalUrl: portalUrl,
+            customerName: merged.customerName,
+            description: 'Your solar installation contract is confirmed. Access your customer portal to view engineering schematics, council approvals, and real-time installation scheduling.'
+          }
+        }).catch(e => console.warn('Customer portal alert dispatch failed:', e));
       }
 
       // 1. Company Association / De-association handling
@@ -1798,6 +1866,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...prev
     ]);
 
+    // Dispatch system email alert for portal invite
+    dispatchSystemAlert({
+      type: 'portal_access',
+      title: `Your Apex Solar Customer Portal Access - ${lead?.customerName || email}`,
+      recipientEmail: email,
+      recipientName: lead?.customerName || 'Valued Customer',
+      data: {
+        username: email,
+        temporaryPassword: tempPass,
+        portalUrl: credentials.inviteLink,
+        customerName: lead?.customerName,
+        description: 'You have been invited to log in to the Apex Solar Customer Portal. Track project milestones, engineering documents, and CEC compliance records.'
+      }
+    }).catch(e => console.warn('Portal invite alert dispatch failed:', e));
+
     return credentials;
   };
 
@@ -1837,6 +1920,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       },
       ...prev
     ]);
+
+    // Dispatch system email alert for tax invoice
+    const customerPrimaryEmail = lead.email ? lead.email.split(',')[0].trim() : 'customer@gmail.com';
+    dispatchSystemAlert({
+      type: 'invoice_issued',
+      title: `Tax Invoice ${inv.invoiceNumber} from Apex Solar Pty Ltd ($${inv.total.toLocaleString()} AUD)`,
+      recipientEmail: customerPrimaryEmail,
+      recipientName: lead.customerName || 'Valued Customer',
+      data: {
+        invoiceNumber: inv.invoiceNumber,
+        totalAmount: `$${inv.total.toLocaleString()} AUD`,
+        dueDate: inv.dueDate,
+        systemSize: `${lead.systemSizeKw || '6.6'} kW Solar System`,
+        customerName: lead.customerName,
+        description: `Your official Australian tax invoice ${inv.invoiceNumber} has been generated. Payment terms and direct deposit details are available in the portal.`
+      }
+    }).catch(e => console.warn('Invoice alert dispatch failed:', e));
 
     return inv;
   };
@@ -1883,6 +1983,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       },
       ...prev
     ]);
+
+    // Dispatch system email alert for payment receipt
+    const customerPrimaryEmail = lead.email ? lead.email.split(',')[0].trim() : 'customer@gmail.com';
+    dispatchSystemAlert({
+      type: 'payment_received',
+      title: `Payment Receipt: ${receipt.receiptNumber} - Apex Solar Pty Ltd`,
+      recipientEmail: customerPrimaryEmail,
+      recipientName: lead.customerName || 'Valued Customer',
+      data: {
+        receiptNumber: receipt.receiptNumber,
+        amountPaid: `$${receipt.amountPaidAud.toLocaleString()} AUD`,
+        paymentDate: receipt.paymentDate,
+        paymentMethod: receipt.paymentMethod,
+        invoiceNumber: inv.invoiceNumber,
+        customerName: lead.customerName,
+        description: `Thank you for your payment of $${receipt.amountPaidAud.toLocaleString()} AUD. Your payment has been credited to invoice ${inv.invoiceNumber}.`
+      }
+    }).catch(e => console.warn('Payment receipt alert dispatch failed:', e));
 
     return receipt;
   };
@@ -2444,6 +2562,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           });
         }
 
+        // Dispatch project milestone alert if status changed
+        if (p.status !== status) {
+          const customerEmail = p.customerEmail || (p.primaryMobile ? `${p.primaryMobile.replace(/\s+/g, '')}@customer.mysolarcrm.com.au` : 'customer@gmail.com');
+          dispatchSystemAlert({
+            type: 'project_milestone',
+            title: `Project Milestone: ${p.projectCode} is now ${status}`,
+            recipientEmail: customerEmail,
+            recipientName: p.customerName || 'Valued Customer',
+            data: {
+              projectCode: p.projectCode,
+              customerName: p.customerName,
+              newStatus: status,
+              previousStatus: p.status,
+              systemSize: `${p.systemSizeKw} kW`,
+              address: p.address,
+              description: `Your solar installation has progressed to milestone "${status}". Our team will notify you of all subsequent inspections and meter reconnections.`
+            }
+          }).catch(e => console.warn('Project milestone alert dispatch failed:', e));
+        }
+
         return updated;
       })
     );
@@ -2494,6 +2632,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setTickets(prev => [newTicket, ...prev]);
+
+    // Dispatch automated support ticket alert email
+    const customerEmail = project.customerEmail || (project.primaryMobile ? `${project.primaryMobile.replace(/\s+/g, '')}@customer.mysolarcrm.com.au` : 'customer@gmail.com');
+    dispatchSystemAlert({
+      type: 'ticket_created',
+      title: `Support Ticket Opened: #${newTicket.ticketNumber} - ${newTicket.title}`,
+      recipientEmail: customerEmail,
+      recipientName: newTicket.customerName || project.customerName,
+      data: {
+        ticketNumber: newTicket.ticketNumber,
+        subject: newTicket.title,
+        priority: newTicket.priority,
+        category: newTicket.category,
+        projectCode: project.projectCode,
+        systemSize: `${project.systemSizeKw || '6.6'} kW`,
+        description: newTicket.description || 'Solar warranty and maintenance ticket logged in Apex Solar ERP.'
+      }
+    }).catch(e => console.warn('Ticket alert dispatch failed:', e));
+
     return { success: true, ticket: newTicket };
   };
 
@@ -2591,6 +2748,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (io.projectId) {
       updateProject(io.projectId, { installOrderId: newIo.id, status: 'RFQ Sent to Installers' });
     }
+
+    // Dispatch automated subcontractor install order alert
+    const targetProject = projects.find(p => p.id === io.projectId);
+    dispatchSystemAlert({
+      type: 'install_dispatched',
+      title: `Installation Job Order: ${newIo.orderNumber} - ${targetProject?.customerName || 'Solar Site'}`,
+      recipientEmail: 'installers@solarinstallers.com.au',
+      recipientName: 'CEC Accredited Solar Installers',
+      data: {
+        orderNumber: newIo.orderNumber,
+        customerName: targetProject?.customerName || 'Customer',
+        address: targetProject?.address || 'Site Address Pending',
+        systemSize: `${targetProject?.systemSizeKw || '6.6'} kW`,
+        panels: `${targetProject?.panelCount || 16}x Panels`,
+        inverter: `${targetProject?.inverterBrand || 'Sungrow'} Inverter`,
+        description: 'Clean Energy Council accredited installation work order ready for scheduling and quote confirmation.'
+      }
+    }).catch(e => console.warn('Install order alert dispatch failed:', e));
   };
 
   const submitInstallerQuote = (

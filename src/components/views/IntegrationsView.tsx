@@ -28,7 +28,8 @@ import {
   Info,
   ArrowLeftRight,
   Copy,
-  Check
+  Check,
+  Bell
 } from 'lucide-react';
 import { IntegrationConfig } from '../../types';
 import { GoogleWorkspaceModal } from '../google/GoogleWorkspaceModal';
@@ -43,8 +44,10 @@ import { VoIPLineSettingsModal } from '../modals/VoIPLineSettingsModal';
 import { MetaAdsSettingsModal } from '../modals/MetaAdsSettingsModal';
 import { TeamsSettingsModal } from '../modals/TeamsSettingsModal';
 import { GoogleMyBusinessSettingsModal } from '../modals/GoogleMyBusinessSettingsModal';
+import { SystemEmailAlertsModal } from '../modals/SystemEmailAlertsModal';
 import { auth, getAccessToken } from '../../services/googleWorkspace';
 import { getDomainRecord, verifyDomainViaDns, confirmDomainDnsHandshake } from '../../services/domainVerification';
+import { getPersonalEmailConfig } from '../../services/systemAlertsEmailService';
 
 export const IntegrationsView: React.FC = () => {
   const { integrations = [], toggleIntegration, connectedDomain = 'solarinstallers.com.au', setConnectedDomain } = useApp();
@@ -103,6 +106,11 @@ export const IntegrationsView: React.FC = () => {
   // Google My Business & Reviews Settings Modal state
   const [isGmbModalOpen, setIsGmbModalOpen] = useState(false);
   const [gmbInitialTab, setGmbInitialTab] = useState<'settings' | 'reviews' | 'automation' | 'posts' | 'diagnostics'>('settings');
+
+  // System Email & Alerts Modal state
+  const [isSystemEmailAlertsModalOpen, setIsSystemEmailAlertsModalOpen] = useState(false);
+  const [systemEmailAlertsTab, setSystemEmailAlertsTab] = useState<'delivery' | 'sender' | 'triggers' | 'test' | 'logs'>('delivery');
+  const [personalEmailConfig, setPersonalEmailConfig] = useState(() => getPersonalEmailConfig());
 
   // Domain verification record state
   const [domainRecord, setDomainRecord] = useState(() => getDomainRecord(connectedDomain));
@@ -542,6 +550,18 @@ export const IntegrationsView: React.FC = () => {
             </button>
 
             <button
+              onClick={() => {
+                setSystemEmailAlertsTab('delivery');
+                setIsSystemEmailAlertsModalOpen(true);
+              }}
+              className="px-3 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              title="Configure personal SMTP, delivery mode, and automated email alerts"
+            >
+              <Bell className="w-3.5 h-3.5 text-amber-400" />
+              <span>System Alerts &amp; SMTP</span>
+            </button>
+
+            <button
               onClick={() => openWorkspaceHub('audit')}
               className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white border border-white/20 text-xs font-bold flex items-center gap-1.5 transition-colors"
             >
@@ -614,6 +634,76 @@ export const IntegrationsView: React.FC = () => {
           <div className="bg-[#141414]/70 p-2 rounded-lg border border-[#262626] flex items-center gap-1.5">
             <Calendar className="w-3 h-3 text-blue-400 shrink-0" />
             <span className="truncate text-gray-300">calendar.readonly (Availability)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* System Email, Alerts & Personal Integration Engine Card */}
+      <div className="bg-[#1e1e1e] p-5 rounded-xl border border-emerald-500/30 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+              <Bell className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-bold text-sm text-white">System Email, Automated Alerts &amp; Personal Integration</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#bef264]/20 text-[#bef264] border border-[#bef264]/30 uppercase">
+                  {personalEmailConfig.deliveryMode.replace('_', ' ')}
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                  {personalEmailConfig.adminAlertEmails?.length || 1} Admin Alert Recipient(s)
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                  {personalEmailConfig.triggers ? Object.values(personalEmailConfig.triggers).filter(Boolean).length : 9} Triggers Active
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Multi-channel outbound dispatch for customer portal logins, new leads, solar quotes, project milestones, install work orders, and Xero invoices. Allows custom SMTP, Google Workspace, or webhook relays.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              onClick={() => {
+                setSystemEmailAlertsTab('test');
+                setIsSystemEmailAlertsModalOpen(true);
+              }}
+              className="px-3 py-2 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-white border border-[#333] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            >
+              <Send className="w-3.5 h-3.5 text-[#bef264]" />
+              <span>Send Test Email</span>
+            </button>
+            <button
+              onClick={() => {
+                setSystemEmailAlertsTab('delivery');
+                setIsSystemEmailAlertsModalOpen(true);
+              }}
+              className="px-3.5 py-2 rounded-lg bg-[#bef264] hover:bg-[#a3e635] text-black text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Configure Alerts &amp; SMTP</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/10 text-[11px] text-gray-300">
+          <div className="bg-[#141414] p-2 rounded-lg border border-[#262626] flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="truncate">New Leads &amp; Quotes: <strong className="text-white">Active</strong></span>
+          </div>
+          <div className="bg-[#141414] p-2 rounded-lg border border-[#262626] flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="truncate">Milestones &amp; DNSP: <strong className="text-white">Active</strong></span>
+          </div>
+          <div className="bg-[#141414] p-2 rounded-lg border border-[#262626] flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="truncate">Subcontractor Orders: <strong className="text-white">Active</strong></span>
+          </div>
+          <div className="bg-[#141414] p-2 rounded-lg border border-[#262626] flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="truncate">Customer Portal Logins: <strong className="text-white">Active</strong></span>
           </div>
         </div>
       </div>
@@ -1022,6 +1112,16 @@ export const IntegrationsView: React.FC = () => {
         isOpen={isGmbModalOpen}
         onClose={() => setIsGmbModalOpen(false)}
         initialTab={gmbInitialTab}
+      />
+
+      {/* System Email, Alerts & Personal Integration Modal */}
+      <SystemEmailAlertsModal
+        isOpen={isSystemEmailAlertsModalOpen}
+        onClose={() => {
+          setIsSystemEmailAlertsModalOpen(false);
+          setPersonalEmailConfig(getPersonalEmailConfig());
+        }}
+        initialTab={systemEmailAlertsTab}
       />
     </div>
   );
