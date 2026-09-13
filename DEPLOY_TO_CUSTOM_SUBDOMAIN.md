@@ -22,14 +22,19 @@ git push -u origin main
 
 ## 2. Setting Up GitHub Pages for Custom Subdomain
 
-1. Open your repository on GitHub: `https://github.com/<USERNAME>/<REPO_NAME>`
-2. Go to **Settings** > **Pages**
-3. Under **Build and deployment**:
-   - **Source**: Select **GitHub Actions** (the included `.github/workflows/deploy.yml` will automatically build Vite and deploy the `dist/` directory on every push).
-4. Under **Custom domain**:
-   - Enter your subdomain: `crm.yourdomain.com.au` (or your chosen subdomain).
-   - Click **Save**.
-   - Check **Enforce HTTPS** (once DNS finishes verifying, GitHub provisions a free Let's Encrypt SSL certificate).
+> ⚠️ **CRITICAL (Resolves `HttpError: Not Found` / `Get Pages site failed`):**
+> By default, new GitHub repositories have GitHub Pages disabled or set to "Deploy from a branch". If the workflow runs before this is enabled, it will output `HttpError: Not Found`.
+>
+> To activate it (1-minute step):
+> 1. Open your repository on GitHub: `https://github.com/<USERNAME>/<REPO_NAME>`
+> 2. Click the **Settings** tab at the top (requires Admin / Owner access to the repo).
+> 3. In the left-hand navigation sidebar, click **Pages** (under the "Code and automation" section).
+> 4. Under **Build and deployment** -> **Source**: Click the dropdown and select **GitHub Actions**.
+> 5. (Optional) Under **Custom domain**:
+>    - Enter your custom domain / subdomain (e.g. `crm.yourdomain.com.au`).
+>    - Click **Save**.
+>    - Check **Enforce HTTPS** once DNS resolves.
+> 6. Go to the **Actions** tab and click **"Re-run all jobs"** on the latest workflow run (or simply `git push`). It will now succeed and publish your site!
 
 ---
 
