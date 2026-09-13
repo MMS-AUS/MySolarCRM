@@ -45,7 +45,7 @@ import { MetaAdsSettingsModal } from '../modals/MetaAdsSettingsModal';
 import { TeamsSettingsModal } from '../modals/TeamsSettingsModal';
 import { GoogleMyBusinessSettingsModal } from '../modals/GoogleMyBusinessSettingsModal';
 import { SystemEmailAlertsModal } from '../modals/SystemEmailAlertsModal';
-import { auth, getAccessToken } from '../../services/googleWorkspace';
+import { auth, getAccessToken, getConnectedWorkspaceUser, verifyGoogleWorkspaceAccount } from '../../services/googleWorkspace';
 import { getDomainRecord, verifyDomainViaDns, confirmDomainDnsHandshake } from '../../services/domainVerification';
 import { getPersonalEmailConfig } from '../../services/systemAlertsEmailService';
 
@@ -122,9 +122,17 @@ export const IntegrationsView: React.FC = () => {
   }, [connectedDomain]);
 
   useEffect(() => {
+    const saved = getConnectedWorkspaceUser();
     getAccessToken().then(tok => {
-      setIsGoogleConnected(!!tok);
-      setGoogleUserEmail(auth.currentUser?.email || (tok ? 'akash.mohite@gmail.com' : null));
+      const isConn = !!tok || !!saved?.isConnected;
+      setIsGoogleConnected(isConn);
+      if (isConn) {
+        verifyGoogleWorkspaceAccount().then(diag => {
+          setGoogleUserEmail(diag.userEmail || auth.currentUser?.email || saved?.email || null);
+        });
+      } else {
+        setGoogleUserEmail(null);
+      }
     });
   }, [isWorkspaceModalOpen, isSettingsModalOpen]);
 

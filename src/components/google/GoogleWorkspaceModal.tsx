@@ -37,6 +37,7 @@ import {
   CalendarEventSummary
 } from '../../services/googleWorkspace';
 import { User } from 'firebase/auth';
+import { useApp } from '../../context/AppContext';
 
 interface GoogleWorkspaceModalProps {
   isOpen: boolean;
@@ -57,13 +58,14 @@ export const GoogleWorkspaceModal: React.FC<GoogleWorkspaceModalProps> = ({
   defaultEventTitle = '',
   defaultEventLocation = ''
 }) => {
+  const { currentUser: appUser, connectedDomain } = useApp();
   const [activeTab, setActiveTab] = useState<'gmail' | 'calendar' | 'audit'>(initialTab);
-  const [currentUser, setCurrentUser] = useState<any>(auth.currentUser);
+  const [currentUser, setCurrentUser] = useState<any>(() => getConnectedWorkspaceUser() || auth.currentUser);
   const [hasToken, setHasToken] = useState<boolean>(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isUnauthorizedDomain, setIsUnauthorizedDomain] = useState(false);
-  const [customEmail, setCustomEmail] = useState('akash.mohite@gmail.com');
+  const [customEmail, setCustomEmail] = useState('');
   const [customToken, setCustomToken] = useState('');
   const [showAdvancedAuth, setShowAdvancedAuth] = useState(false);
   const [copiedDomain, setCopiedDomain] = useState(false);
@@ -192,7 +194,7 @@ export const GoogleWorkspaceModal: React.FC<GoogleWorkspaceModalProps> = ({
 
   const handleDirectConnect = (targetEmail?: string) => {
     try {
-      const email = targetEmail || customEmail || 'akash.mohite@gmail.com';
+      const email = targetEmail || customEmail.trim() || appUser.email || `admin@${connectedDomain}`;
       const res = connectDirectWorkspaceAccount({
         email,
         accessToken: customToken.trim() || undefined
@@ -449,7 +451,7 @@ export const GoogleWorkspaceModal: React.FC<GoogleWorkspaceModalProps> = ({
                     </span>
                   </div>
                   <span className="text-[11px] text-gray-400 font-mono">
-                    {currentUser.email || 'akash.mohite@gmail.com'}
+                    {currentUser.email || appUser.email || `admin@${connectedDomain}`}
                   </span>
                 </div>
               </div>
@@ -486,12 +488,12 @@ export const GoogleWorkspaceModal: React.FC<GoogleWorkspaceModalProps> = ({
             ) : (
               <div className="flex items-center gap-2 flex-wrap">
                 <button
-                  onClick={() => handleDirectConnect('akash.mohite@gmail.com')}
+                  onClick={() => handleDirectConnect(appUser.email || `admin@${connectedDomain}`)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold rounded-lg shadow-sm transition-colors"
-                  title="Instant authorization for akash.mohite@gmail.com"
+                  title={`Authorize as ${appUser.email || `admin@${connectedDomain}`}`}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Connect as akash.mohite@gmail.com</span>
+                  <span>Connect as {appUser.email || `admin@${connectedDomain}`}</span>
                 </button>
                 <button
                   onClick={() => handleSignIn()}
@@ -559,11 +561,11 @@ export const GoogleWorkspaceModal: React.FC<GoogleWorkspaceModalProps> = ({
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
-                  onClick={() => handleDirectConnect('akash.mohite@gmail.com')}
+                  onClick={() => handleDirectConnect(appUser.email || `admin@${connectedDomain}`)}
                   className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1.5"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Connect akash.mohite@gmail.com</span>
+                  <span>Connect {appUser.email || `admin@${connectedDomain}`}</span>
                 </button>
                 <button
                   type="button"
@@ -590,7 +592,7 @@ export const GoogleWorkspaceModal: React.FC<GoogleWorkspaceModalProps> = ({
                       type="email"
                       value={customEmail}
                       onChange={e => setCustomEmail(e.target.value)}
-                      placeholder="e.g. akash.mohite@gmail.com"
+                      placeholder={`e.g. ${appUser.email || `user@${connectedDomain}`}`}
                       className="w-full text-xs bg-[#1a1a1a] border border-[#333] rounded-lg px-2.5 py-1.5 text-white outline-none focus:border-amber-400"
                     />
                   </div>

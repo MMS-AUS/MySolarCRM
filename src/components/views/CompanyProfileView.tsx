@@ -793,7 +793,7 @@ export const CompanyProfileView: React.FC = () => {
                             ? 'sarah.jenkins@gmail.com'
                             : previewPortalType === 'installer'
                             ? 'apex.solar@gmail.com'
-                            : 'akash.mohite@gmail.com'
+                            : `admin@${(companyProfile.companyName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'mysolarcrm')}.com.au`
                         }
                         className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 outline-none"
                       />

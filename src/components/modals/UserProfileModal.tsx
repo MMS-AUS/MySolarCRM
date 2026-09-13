@@ -25,8 +25,8 @@ interface UserProfileModalProps {
 export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose }) => {
   const { currentUser, setCurrentUser, updateSystemUser, logout } = useApp();
 
-  const [name, setName] = useState(currentUser.name || 'Akash Mohite');
-  const [email, setEmail] = useState(currentUser.email || 'akash.mohite@gmail.com');
+  const [name, setName] = useState(currentUser.name || 'Admin User');
+  const [email, setEmail] = useState(currentUser.email || '');
   const [phone, setPhone] = useState(currentUser.phone || '+61 412 889 012');
   const [voipLineNumber, setVoipLineNumber] = useState(currentUser.voipLineNumber || '+61 2 8311 4920');
   const [department, setDepartment] = useState(currentUser.department || 'Management');

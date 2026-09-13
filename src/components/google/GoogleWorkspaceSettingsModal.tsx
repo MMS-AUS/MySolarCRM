@@ -33,6 +33,7 @@ import {
   simulateDomainVerification
 } from '../../services/domainVerification';
 import { DomainVerificationRecord, GoogleWorkspaceIntegrationSettings } from '../../types';
+import { useApp } from '../../context/AppContext';
 
 interface Props {
   isOpen: boolean;
@@ -67,6 +68,7 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
   connectedDomain,
   initialTab = 'account'
 }) => {
+  const { currentUser: appUser } = useApp();
   const [activeTab, setActiveTab] = useState<'account' | 'gmail' | 'calendar' | 'domain'>(initialTab);
   const [diagnostics, setDiagnostics] = useState<GoogleAccountDiagnostics | null>(null);
   const [isLoadingDiagnostics, setIsLoadingDiagnostics] = useState(false);
@@ -93,7 +95,7 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
   const [saveNotification, setSaveNotification] = useState<string | null>(null);
   const [domainAuthError, setDomainAuthError] = useState<string | null>(null);
   const [showDirectConnectForm, setShowDirectConnectForm] = useState(false);
-  const [directEmailInput, setDirectEmailInput] = useState('akash.mohite@gmail.com');
+  const [directEmailInput, setDirectEmailInput] = useState(() => appUser.email || '');
   const [directTokenInput, setDirectTokenInput] = useState('');
 
   // Refresh domain record when domain changes
@@ -147,7 +149,7 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
 
   const handleDirectConnect = async (targetEmail?: string) => {
     try {
-      const email = targetEmail || directEmailInput || 'akash.mohite@gmail.com';
+      const email = targetEmail || directEmailInput.trim() || appUser.email || `admin@${connectedDomain}`;
       connectDirectWorkspaceAccount({
         email,
         accessToken: directTokenInput.trim() || undefined
@@ -215,7 +217,10 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
 
   if (!isOpen) return null;
 
-  const connectedEmail = diagnostics?.userEmail || auth.currentUser?.email || (diagnostics?.isConnected ? 'akash.mohite@gmail.com' : null);
+  const connectedEmail =
+    diagnostics?.userEmail ||
+    auth.currentUser?.email ||
+    (diagnostics?.isConnected ? (getConnectedWorkspaceUser()?.email || appUser.email || null) : null);
   const connectedEmailDomain = connectedEmail ? connectedEmail.split('@')[1]?.toLowerCase() : null;
   const isDomainMatch = connectedEmailDomain === connectedDomain.toLowerCase().trim();
   const isDomainVerified = domainRecord.status === 'verified';
@@ -359,11 +364,11 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
                     <div className="flex items-center gap-2 flex-wrap">
                       <button
                         type="button"
-                        onClick={() => handleDirectConnect('akash.mohite@gmail.com')}
+                        onClick={() => handleDirectConnect(appUser.email || `admin@${connectedDomain}`)}
                         className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1.5"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Connect as akash.mohite@gmail.com</span>
+                        <span>Connect as {appUser.email || `admin@${connectedDomain}`}</span>
                       </button>
                       <button
                         type="button"

@@ -42,6 +42,7 @@ import {
   OutboundEmailLog,
   EmailDeliveryMode
 } from '../../types';
+import { useApp } from '../../context/AppContext';
 
 interface Props {
   isOpen: boolean;
@@ -54,6 +55,7 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
   onClose,
   initialTab = 'delivery'
 }) => {
+  const { currentUser: appUser, connectedDomain } = useApp();
   const [activeTab, setActiveTab] = useState<'delivery' | 'sender' | 'triggers' | 'test' | 'logs'>(initialTab);
   const [config, setConfig] = useState<PersonalEmailIntegrationConfig>(() => getPersonalEmailConfig());
   const [logs, setLogs] = useState<OutboundEmailLog[]>(() => getOutboundEmailLogs());
@@ -66,7 +68,9 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; details?: any } | null>(null);
 
   // Test form state
-  const [testRecipient, setTestRecipient] = useState(config.senderEmail || 'akash.mohite@gmail.com');
+  const [testRecipient, setTestRecipient] = useState(
+    () => config.senderEmail || getConnectedWorkspaceUser()?.email || appUser?.email || `admin@${connectedDomain}`
+  );
   const [testCustomNote, setTestCustomNote] = useState('Testing system automated alert dispatch pipeline.');
 
   // Admin email tag input
@@ -84,12 +88,14 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
     if (isOpen) {
       const currentConfig = getPersonalEmailConfig();
       setConfig(currentConfig);
-      setTestRecipient(currentConfig.senderEmail || 'akash.mohite@gmail.com');
+      setTestRecipient(
+        currentConfig.senderEmail || getConnectedWorkspaceUser()?.email || appUser?.email || `admin@${connectedDomain}`
+      );
       setLogs(getOutboundEmailLogs());
       loadDiagnostics();
       setActiveTab(initialTab);
     }
-  }, [isOpen, initialTab]);
+  }, [isOpen, initialTab, appUser?.email, connectedDomain]);
 
   const loadDiagnostics = async () => {
     try {
@@ -400,7 +406,7 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                         value={config.senderEmail}
                         onChange={e => setConfig({ ...config, senderEmail: e.target.value })}
                         className="w-full px-3 py-2 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none"
-                        placeholder="akash.mohite@gmail.com"
+                        placeholder={`admin@${connectedDomain}`}
                       />
                     </div>
                     <div>
@@ -491,7 +497,7 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                         value={config.smtpUsername}
                         onChange={e => setConfig({ ...config, smtpUsername: e.target.value })}
                         className="w-full px-3 py-2 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none font-mono"
-                        placeholder="akash.mohite@gmail.com"
+                        placeholder={`admin@${connectedDomain}`}
                       />
                     </div>
                     <div>
@@ -639,7 +645,7 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                       value={config.senderEmail}
                       onChange={e => setConfig({ ...config, senderEmail: e.target.value })}
                       className="w-full px-3 py-2 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none font-mono"
-                      placeholder="akash.mohite@gmail.com"
+                      placeholder={`admin@${connectedDomain}`}
                     />
                   </div>
 
@@ -652,7 +658,7 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                       value={config.replyToEmail}
                       onChange={e => setConfig({ ...config, replyToEmail: e.target.value })}
                       className="w-full px-3 py-2 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none font-mono"
-                      placeholder="support@solarinstallers.com.au"
+                      placeholder={`support@${connectedDomain}`}
                     />
                   </div>
                 </div>
@@ -680,7 +686,7 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                     value={newAdminEmail}
                     onChange={e => setNewAdminEmail(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddAdminEmail()}
-                    placeholder="Enter email address (e.g. akash.mohite@gmail.com)"
+                    placeholder={`Enter email address (e.g. admin@${connectedDomain})`}
                     className="flex-1 px-3 py-2 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none font-mono"
                   />
                   <button
@@ -899,7 +905,7 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                       value={testRecipient}
                       onChange={e => setTestRecipient(e.target.value)}
                       className="w-full px-3 py-2 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none font-mono"
-                      placeholder="akash.mohite@gmail.com"
+                      placeholder={`admin@${connectedDomain}`}
                     />
                   </div>
 

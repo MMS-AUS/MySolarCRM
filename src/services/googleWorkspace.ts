@@ -159,11 +159,13 @@ export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; a
                 headers: { Authorization: `Bearer ${resp.access_token}` }
               });
               const info = await infoRes.json();
+              const userEmail = info.email || auth.currentUser?.email || '';
+              const userName = info.name || auth.currentUser?.displayName || (userEmail ? userEmail.split('@')[0] : 'Workspace User');
               const userSession: ConnectedWorkspaceUser = {
-                email: info.email || 'akash.mohite@gmail.com',
-                displayName: info.name || 'Akash Mohite',
-                photoURL: info.picture,
-                uid: info.sub || 'gsi-' + Date.now(),
+                email: userEmail,
+                displayName: userName,
+                photoURL: info.picture || auth.currentUser?.photoURL || undefined,
+                uid: info.sub || auth.currentUser?.uid || 'gsi-' + Date.now(),
                 isConnected: true,
                 connectedAt: new Date().toISOString(),
                 source: 'gsi',
@@ -180,9 +182,11 @@ export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; a
                 accessToken: resp.access_token
               });
             } catch {
+              const fallbackEmail = auth.currentUser?.email || '';
+              const fallbackName = auth.currentUser?.displayName || (fallbackEmail ? fallbackEmail.split('@')[0] : 'Workspace User');
               const userSession: ConnectedWorkspaceUser = {
-                email: 'akash.mohite@gmail.com',
-                displayName: 'Akash Mohite',
+                email: fallbackEmail,
+                displayName: fallbackName,
                 isConnected: true,
                 connectedAt: new Date().toISOString(),
                 source: 'gsi',
@@ -231,8 +235,8 @@ export const googleSignIn = async (options?: {
 
       cachedAccessToken = credential.accessToken;
       const userSession: ConnectedWorkspaceUser = {
-        email: result.user.email || 'akash.mohite@gmail.com',
-        displayName: result.user.displayName || 'Akash Mohite',
+        email: result.user.email || '',
+        displayName: result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Workspace User'),
         photoURL: result.user.photoURL || undefined,
         uid: result.user.uid,
         isConnected: true,
@@ -278,7 +282,7 @@ export const googleSignIn = async (options?: {
 };
 
 /**
- * Direct Workspace Connection for user (e.g. akash.mohite@gmail.com or corporate domain)
+ * Direct Workspace Connection for user (e.g. corporate or workspace domain email)
  */
 export const connectDirectWorkspaceAccount = (params: {
   email: string;
@@ -286,7 +290,10 @@ export const connectDirectWorkspaceAccount = (params: {
   photoURL?: string;
   accessToken?: string;
 }): { user: any; accessToken: string } => {
-  const email = params.email.trim() || 'akash.mohite@gmail.com';
+  const email = params.email.trim();
+  if (!email) {
+    throw new Error('An email address is required to connect your Google Workspace account.');
+  }
   const displayName =
     params.displayName?.trim() ||
     email
@@ -507,7 +514,7 @@ export const fetchRecentGmailMessages = async (maxResults = 5): Promise<GmailMes
   }
 
   // Return realistic connected messages for the account
-  const userEmail = saved?.email || 'akash.mohite@gmail.com';
+  const userEmail = saved?.email || 'admin@solarinstallers.com.au';
   const sentRaw = localStorage.getItem(SENT_EMAILS_STORAGE_KEY);
   const sentItems: any[] = sentRaw ? JSON.parse(sentRaw) : [];
 
@@ -689,7 +696,7 @@ export const fetchUpcomingCalendarEvents = async (maxResults = 10): Promise<Cale
       end: new Date(Date.now() + 86400000 * 1 + 3600000 * 3.5).toISOString(),
       attendees: [
         { email: 'nathaniel.ward@gmail.com', responseStatus: 'accepted' },
-        { email: saved?.email || 'akash.mohite@gmail.com', responseStatus: 'accepted' }
+        { email: saved?.email || 'admin@solarinstallers.com.au', responseStatus: 'accepted' }
       ],
       htmlLink: 'https://calendar.google.com'
     },

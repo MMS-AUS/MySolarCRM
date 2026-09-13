@@ -14,17 +14,17 @@ export const DEFAULT_PERSONAL_EMAIL_CONFIG: PersonalEmailIntegrationConfig = {
   deliveryMode: 'google_workspace',
   smtpHost: 'smtp.gmail.com',
   smtpPort: 587,
-  smtpUsername: 'akash.mohite@gmail.com',
+  smtpUsername: '',
   smtpPassword: '',
   smtpSecure: true,
   webhookUrl: '',
   webhookApiKey: '',
   webhookPayloadType: 'resend',
   customGoogleAccessToken: '',
-  senderEmail: 'akash.mohite@gmail.com',
+  senderEmail: '',
   senderName: 'Apex Solar Energy Systems',
-  replyToEmail: 'akash.mohite@gmail.com',
-  adminAlertEmails: ['akash.mohite@gmail.com'],
+  replyToEmail: '',
+  adminAlertEmails: [],
   triggers: {
     newLeadAlert: true,
     leadProposalSentAlert: true,
@@ -45,12 +45,19 @@ export const DEFAULT_PERSONAL_EMAIL_CONFIG: PersonalEmailIntegrationConfig = {
  * Retrieve personal email integration settings
  */
 export const getPersonalEmailConfig = (): PersonalEmailIntegrationConfig => {
+  const connectedUser = getConnectedWorkspaceUser();
+  const activeEmail = connectedUser?.email || '';
+
   try {
     const raw = localStorage.getItem(CONFIG_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       return {
         ...DEFAULT_PERSONAL_EMAIL_CONFIG,
+        senderEmail: activeEmail,
+        replyToEmail: activeEmail,
+        smtpUsername: activeEmail,
+        adminAlertEmails: activeEmail ? [activeEmail] : [],
         ...parsed,
         triggers: {
           ...DEFAULT_PERSONAL_EMAIL_CONFIG.triggers,
@@ -61,7 +68,13 @@ export const getPersonalEmailConfig = (): PersonalEmailIntegrationConfig => {
   } catch (e) {
     console.error('Failed to load personal email config:', e);
   }
-  return { ...DEFAULT_PERSONAL_EMAIL_CONFIG };
+  return {
+    ...DEFAULT_PERSONAL_EMAIL_CONFIG,
+    senderEmail: activeEmail,
+    replyToEmail: activeEmail,
+    smtpUsername: activeEmail,
+    adminAlertEmails: activeEmail ? [activeEmail] : []
+  };
 };
 
 /**
@@ -214,7 +227,7 @@ export async function sendSystemEmail(options: {
   const token = (await getAccessToken()) || config.customGoogleAccessToken;
 
   const fromName = options.senderName || config.senderName || 'Apex Solar Operations';
-  const fromEmail = options.senderEmail || config.senderEmail || savedWorkspaceUser?.email || 'akash.mohite@gmail.com';
+  const fromEmail = options.senderEmail || config.senderEmail || savedWorkspaceUser?.email || 'alerts@apexsolar.com.au';
   const fromHeader = `${fromName} <${fromEmail}>`;
   const toList = Array.isArray(options.to) ? options.to : [options.to];
   const toStr = toList.join(', ');
@@ -647,7 +660,7 @@ export async function sendTestEmail(toEmail: string, customNotes?: string): Prom
   `;
 
   return await sendSystemEmail({
-    to: toEmail.trim() || config.senderEmail || 'akash.mohite@gmail.com',
+    to: toEmail.trim() || config.senderEmail || getConnectedWorkspaceUser()?.email || 'admin@solarinstallers.com.au',
     subject: testSubject,
     bodyHtml,
     category: 'Test Dispatch'

@@ -84,6 +84,7 @@ import {
   parseAudAccounts
 } from '../utils/australianPostcodes';
 import { dispatchSystemAlert, getPersonalEmailConfig } from '../services/systemAlertsEmailService';
+import { getConnectedWorkspaceUser } from '../services/googleWorkspace';
 
 interface AppContextType {
   currentUser: UserProfile;
@@ -693,6 +694,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem('solar_user', JSON.stringify(currentUser));
   }, [currentUser]);
+
+  // Sync connected Google Workspace account into admin user profile if connected
+  useEffect(() => {
+    const wsUser = getConnectedWorkspaceUser();
+    if (wsUser?.isConnected && wsUser.email) {
+      if (currentUser.email !== wsUser.email) {
+        setCurrentUser(prev => ({
+          ...prev,
+          email: wsUser.email,
+          name: wsUser.displayName || prev.name
+        }));
+        setSystemUsers(prevUsers =>
+          prevUsers.map(u =>
+            u.id === currentUser.id
+              ? { ...u, email: wsUser.email, name: wsUser.displayName || u.name }
+              : u
+          )
+        );
+      }
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('solar_contacts', JSON.stringify(contacts));
@@ -1538,7 +1560,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     dispatchSystemAlert({
       type: 'new_lead',
       title: `New Solar Lead Received: ${fullName} (${newLead.systemSizeKw}kW - ${newLead.suburb || newLead.state})`,
-      recipientEmail: customerPrimaryEmail || 'akash.mohite@gmail.com',
+      recipientEmail: customerPrimaryEmail || `sales@${connectedDomain}`,
       recipientName: fullName,
       data: {
         customerName: fullName,
