@@ -66,7 +66,7 @@ export const IntegrationsView: React.FC = () => {
 
   // Google Workspace Settings Modal state
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [settingsModalTab, setSettingsModalTab] = useState<'account' | 'domain' | 'gmail' | 'calendar'>('account');
+  const [settingsModalTab, setSettingsModalTab] = useState<'account' | 'oauth' | 'domain' | 'gmail' | 'calendar'>('account');
 
   // BridgeSelect STC Portal Settings Modal state
   const [isBridgeSelectModalOpen, setIsBridgeSelectModalOpen] = useState(false);
@@ -142,7 +142,7 @@ export const IntegrationsView: React.FC = () => {
     setIsWorkspaceModalOpen(true);
   };
 
-  const openSettings = (tab: 'account' | 'domain' | 'gmail' | 'calendar') => {
+  const openSettings = (tab: 'account' | 'oauth' | 'domain' | 'gmail' | 'calendar') => {
     setSettingsModalTab(tab);
     setIsSettingsModalOpen(true);
   };
@@ -562,6 +562,19 @@ export const IntegrationsView: React.FC = () => {
             >
               <UserCheck className={`w-3.5 h-3.5 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
               <span>Account Settings</span>
+            </button>
+
+            <button
+              onClick={() => openSettings('oauth')}
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                isLight
+                  ? 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200'
+                  : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border-blue-500/30'
+              }`}
+              title="View Google Cloud OAuth Consent Screen URL, authorized domains, test users, and configuration settings"
+            >
+              <ShieldCheck className={`w-3.5 h-3.5 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
+              <span>OAuth Consent Screen</span>
             </button>
 
             <button

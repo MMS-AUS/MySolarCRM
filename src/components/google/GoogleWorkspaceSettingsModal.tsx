@@ -39,7 +39,21 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   connectedDomain: string;
-  initialTab?: 'account' | 'gmail' | 'calendar' | 'domain';
+  initialTab?: 'account' | 'oauth' | 'gmail' | 'calendar' | 'domain';
+}
+
+interface OAuthConsentConfig {
+  appName: string;
+  userSupportEmail: string;
+  appLogoUrl: string;
+  appDomain: string;
+  privacyPolicyUrl: string;
+  termsOfServiceUrl: string;
+  authorizedDomains: string[];
+  developerContactEmail: string;
+  userType: 'internal' | 'external';
+  publishingStatus: 'testing' | 'in_production';
+  testUsers: string[];
 }
 
 const DEFAULT_SETTINGS: GoogleWorkspaceIntegrationSettings = {
@@ -69,7 +83,7 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
   initialTab = 'account'
 }) => {
   const { currentUser: appUser } = useApp();
-  const [activeTab, setActiveTab] = useState<'account' | 'gmail' | 'calendar' | 'domain'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'account' | 'oauth' | 'gmail' | 'calendar' | 'domain'>(initialTab);
   const [diagnostics, setDiagnostics] = useState<GoogleAccountDiagnostics | null>(null);
   const [isLoadingDiagnostics, setIsLoadingDiagnostics] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -80,6 +94,31 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
   const [domainRecord, setDomainRecord] = useState<DomainVerificationRecord>(() =>
     getDomainRecord(connectedDomain)
   );
+
+  // OAuth Consent Screen Configuration State
+  const [oauthConfig, setOAuthConfig] = useState<OAuthConsentConfig>(() => {
+    try {
+      const saved = localStorage.getItem('solar_oauth_consent_config');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
+    }
+    return {
+      appName: 'Apex Solar CRM & Operations Hub',
+      userSupportEmail: appUser.email || `admin@${connectedDomain}`,
+      appLogoUrl: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?w=128&auto=format&fit=crop&q=80',
+      appDomain: `https://${connectedDomain}`,
+      privacyPolicyUrl: `https://${connectedDomain}/privacy`,
+      termsOfServiceUrl: `https://${connectedDomain}/terms`,
+      authorizedDomains: [connectedDomain, 'google.com', 'firebaseapp.com'],
+      developerContactEmail: appUser.email || `support@${connectedDomain}`,
+      userType: 'external',
+      publishingStatus: 'testing',
+      testUsers: [appUser.email || 'akash.mohite@gmail.com', `operations@${connectedDomain}`].filter(Boolean)
+    };
+  });
+  const [newTestUserEmail, setNewTestUserEmail] = useState('');
+  const [newAuthDomain, setNewAuthDomain] = useState('');
 
   // Settings state stored in localStorage
   const [settings, setSettings] = useState<GoogleWorkspaceIntegrationSettings>(() => {
@@ -293,6 +332,20 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
               }`}
             >
               {isDomainVerified ? 'Verified' : 'Pending'}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('oauth')}
+            className={`px-3 py-2 font-semibold border-b-2 transition-colors flex items-center gap-1.5 shrink-0 ${
+              activeTab === 'oauth'
+                ? 'border-[#bef264] text-[#bef264]'
+                : 'border-transparent text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+            <span>OAuth Consent Screen</span>
+            <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-blue-500/20 text-blue-300">
+              GCP Setup
             </span>
           </button>
           <button
@@ -781,6 +834,419 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
                       )}
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: OAUTH CONSENT SCREEN CONFIGURATION */}
+          {activeTab === 'oauth' && (
+            <div className="space-y-4 text-xs">
+              {/* Top GCP Location Banner */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-950/40 via-[#141414] to-[#141414] border border-blue-500/30 space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2 text-blue-300 font-bold text-sm">
+                    <ShieldCheck className="w-5 h-5 text-blue-400" />
+                    <span>Google Cloud Console OAuth Consent Screen Finder</span>
+                  </div>
+                  <a
+                    href="https://console.cloud.google.com/apis/credentials/consent"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+                  >
+                    <span>Open GCP OAuth Consent Screen</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+                <p className="text-gray-300 leading-relaxed text-[11px]">
+                  The <strong>OAuth Consent Screen</strong> is configured in the <strong>Google Cloud Platform (GCP) Console</strong>. It determines what information your users see when authenticating with Google Workspace to dispatch client solar proposals via Gmail and sync appointments in Google Calendar.
+                </p>
+                <div className="p-3 bg-[#111] rounded-lg border border-[#262626] font-mono text-[11px] text-gray-300 space-y-1">
+                  <div className="flex items-center gap-2 text-blue-400 font-bold">
+                    <Info className="w-3.5 h-3.5" />
+                    <span>Exact Path in Google Cloud Console:</span>
+                  </div>
+                  <div className="text-white pl-5 font-semibold">
+                    Google Cloud Console → APIs &amp; Services → OAuth consent screen
+                  </div>
+                  <div className="text-gray-400 pl-5 text-[10px]">
+                    Direct URL: <span className="text-blue-300 underline">https://console.cloud.google.com/apis/credentials/consent</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step by Step Configuration Card */}
+              <div className="p-4 rounded-xl bg-[#141414] border border-[#2d2d2d] space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                    <Sliders className="w-4 h-4 text-[#bef264]" />
+                    <span>OAuth Consent Screen Configuration Values</span>
+                  </h3>
+                  <span className="text-[10px] text-gray-400">
+                    Auto-generated for <strong>@{connectedDomain}</strong>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-300 mb-1">
+                      1. App Name
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={oauthConfig.appName}
+                        onChange={e => setOAuthConfig({ ...oauthConfig, appName: e.target.value })}
+                        className="w-full px-3 py-2 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(oauthConfig.appName);
+                          setSaveNotification('App name copied to clipboard');
+                          setTimeout(() => setSaveNotification(null), 2500);
+                        }}
+                        className="p-2 bg-[#222] hover:bg-[#2c2c2c] rounded-lg border border-[#383838] text-gray-300 hover:text-white shrink-0"
+                        title="Copy App Name"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-300 mb-1">
+                      2. User Support Email
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="email"
+                        value={oauthConfig.userSupportEmail}
+                        onChange={e => setOAuthConfig({ ...oauthConfig, userSupportEmail: e.target.value })}
+                        className="w-full px-3 py-2 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(oauthConfig.userSupportEmail);
+                          setSaveNotification('Support email copied');
+                          setTimeout(() => setSaveNotification(null), 2500);
+                        }}
+                        className="p-2 bg-[#222] hover:bg-[#2c2c2c] rounded-lg border border-[#383838] text-gray-300 hover:text-white shrink-0"
+                        title="Copy Support Email"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-300 mb-1">
+                      3. Application Home Page
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="url"
+                        value={oauthConfig.appDomain}
+                        onChange={e => setOAuthConfig({ ...oauthConfig, appDomain: e.target.value })}
+                        className="w-full px-3 py-2 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(oauthConfig.appDomain);
+                          setSaveNotification('App domain copied');
+                          setTimeout(() => setSaveNotification(null), 2500);
+                        }}
+                        className="p-2 bg-[#222] hover:bg-[#2c2c2c] rounded-lg border border-[#383838] text-gray-300 hover:text-white shrink-0"
+                        title="Copy App Domain"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-300 mb-1">
+                      4. Developer Contact Information
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="email"
+                        value={oauthConfig.developerContactEmail}
+                        onChange={e => setOAuthConfig({ ...oauthConfig, developerContactEmail: e.target.value })}
+                        className="w-full px-3 py-2 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(oauthConfig.developerContactEmail);
+                          setSaveNotification('Developer email copied');
+                          setTimeout(() => setSaveNotification(null), 2500);
+                        }}
+                        className="p-2 bg-[#222] hover:bg-[#2c2c2c] rounded-lg border border-[#383838] text-gray-300 hover:text-white shrink-0"
+                        title="Copy Developer Email"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* User Type & Publishing Status */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#262626]">
+                  <div className="p-3 bg-[#181818] rounded-lg border border-[#2d2d2d] space-y-1.5">
+                    <span className="font-bold text-white flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                      User Type Selection
+                    </span>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setOAuthConfig({ ...oauthConfig, userType: 'internal' })}
+                        className={`flex-1 py-1.5 px-2 rounded text-[11px] font-bold border transition-colors ${
+                          oauthConfig.userType === 'internal'
+                            ? 'bg-blue-600/30 text-blue-300 border-blue-500/50'
+                            : 'bg-[#222] text-gray-400 border-transparent hover:text-white'
+                        }`}
+                      >
+                        Internal (Workspace Only)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOAuthConfig({ ...oauthConfig, userType: 'external' })}
+                        className={`flex-1 py-1.5 px-2 rounded text-[11px] font-bold border transition-colors ${
+                          oauthConfig.userType === 'external'
+                            ? 'bg-blue-600/30 text-blue-300 border-blue-500/50'
+                            : 'bg-[#222] text-gray-400 border-transparent hover:text-white'
+                        }`}
+                      >
+                        External (Any Google Account)
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-gray-400">
+                      {oauthConfig.userType === 'internal'
+                        ? 'Available only to users within your Google Workspace organization without external verification.'
+                        : 'Available to any Google user. In "Testing" mode, only authorized Test Users can sign in.'}
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-[#181818] rounded-lg border border-[#2d2d2d] space-y-1.5">
+                    <span className="font-bold text-white flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                      Publishing Status
+                    </span>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setOAuthConfig({ ...oauthConfig, publishingStatus: 'testing' })}
+                        className={`flex-1 py-1.5 px-2 rounded text-[11px] font-bold border transition-colors ${
+                          oauthConfig.publishingStatus === 'testing'
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                            : 'bg-[#222] text-gray-400 border-transparent hover:text-white'
+                        }`}
+                      >
+                        Testing Mode
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOAuthConfig({ ...oauthConfig, publishingStatus: 'in_production' })}
+                        className={`flex-1 py-1.5 px-2 rounded text-[11px] font-bold border transition-colors ${
+                          oauthConfig.publishingStatus === 'in_production'
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                            : 'bg-[#222] text-gray-400 border-transparent hover:text-white'
+                        }`}
+                      >
+                        In Production
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-gray-400">
+                      {oauthConfig.publishingStatus === 'testing'
+                        ? 'Requires adding user emails under "Test users" below to avoid Error 403: access_denied.'
+                        : 'App is publicly accessible to all authorized Google Workspace users.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Authorized Domains List */}
+                <div className="space-y-2 pt-2 border-t border-[#262626]">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-bold text-gray-300">
+                      Authorized Domains (Google Cloud &amp; Firebase Console)
+                    </label>
+                    <span className="text-[10px] text-gray-400">Required for popup and redirect authentication</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {oauthConfig.authorizedDomains.map((dom, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2.5 py-1 rounded-md bg-[#222] border border-[#383838] text-gray-200 font-mono text-[11px] flex items-center gap-2"
+                      >
+                        <span>{dom}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOAuthConfig({
+                              ...oauthConfig,
+                              authorizedDomains: oauthConfig.authorizedDomains.filter((_, i) => i !== idx)
+                            })
+                          }
+                          className="text-gray-500 hover:text-red-400"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newAuthDomain}
+                      onChange={e => setNewAuthDomain(e.target.value)}
+                      placeholder="e.g. your-app.run.app"
+                      className="flex-1 px-3 py-1.5 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (newAuthDomain.trim() && !oauthConfig.authorizedDomains.includes(newAuthDomain.trim())) {
+                          setOAuthConfig({
+                            ...oauthConfig,
+                            authorizedDomains: [...oauthConfig.authorizedDomains, newAuthDomain.trim()]
+                          });
+                          setNewAuthDomain('');
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-[#262626] hover:bg-[#333] text-white font-semibold rounded-lg text-xs border border-[#383838]"
+                    >
+                      Add Domain
+                    </button>
+                  </div>
+                </div>
+
+                {/* Test Users Management (For Testing Mode) */}
+                <div className="space-y-2 pt-2 border-t border-[#262626]">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-[11px] font-bold text-white">
+                        Test Users (GCP OAuth Consent Screen &gt; Test users)
+                      </label>
+                      <p className="text-[10px] text-amber-400/90">
+                        While your app is in <strong>Testing</strong> status, only these email accounts can authorize Gmail and Calendar permissions.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {oauthConfig.testUsers.map((email, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2.5 py-1 rounded-md bg-blue-950/40 border border-blue-500/40 text-blue-200 font-mono text-[11px] flex items-center gap-2"
+                      >
+                        <UserCheck className="w-3 h-3 text-blue-400" />
+                        <span>{email}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOAuthConfig({
+                              ...oauthConfig,
+                              testUsers: oauthConfig.testUsers.filter((_, i) => i !== idx)
+                            })
+                          }
+                          className="text-blue-400 hover:text-red-400"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={newTestUserEmail}
+                      onChange={e => setNewTestUserEmail(e.target.value)}
+                      placeholder="Add authorized test user email (e.g. installer@gmail.com)"
+                      className="flex-1 px-3 py-1.5 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (newTestUserEmail.trim() && !oauthConfig.testUsers.includes(newTestUserEmail.trim())) {
+                          setOAuthConfig({
+                            ...oauthConfig,
+                            testUsers: [...oauthConfig.testUsers, newTestUserEmail.trim()]
+                          });
+                          setNewTestUserEmail('');
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-xs"
+                    >
+                      Add Test User
+                    </button>
+                  </div>
+                </div>
+
+                {/* OAuth Required Scopes Reference */}
+                <div className="space-y-2 pt-2 border-t border-[#262626]">
+                  <span className="block text-[11px] font-bold text-gray-300">
+                    Required Scopes to add in Step 2 (&quot;Scopes&quot;):
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                    <div className="p-2 rounded-lg bg-[#181818] border border-[#2d2d2d] flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-red-400" />
+                        <span className="font-mono text-gray-200">https://www.googleapis.com/auth/gmail.send</span>
+                      </div>
+                      <span className="text-[9px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded">Proposals</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-[#181818] border border-[#2d2d2d] flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-red-400" />
+                        <span className="font-mono text-gray-200">https://www.googleapis.com/auth/gmail.readonly</span>
+                      </div>
+                      <span className="text-[9px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded">Sync</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-[#181818] border border-[#2d2d2d] flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                        <span className="font-mono text-gray-200">https://www.googleapis.com/auth/calendar.events</span>
+                      </div>
+                      <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded">Booking</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-[#181818] border border-[#2d2d2d] flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                        <span className="font-mono text-gray-200">https://www.googleapis.com/auth/calendar.readonly</span>
+                      </div>
+                      <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded">Free/Busy</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Save Local OAuth Config */}
+                <div className="flex items-center justify-between pt-2 border-t border-[#262626]">
+                  <a
+                    href="https://console.cloud.google.com/apis/credentials/consent"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold text-[11px]"
+                  >
+                    <span>Open Google Cloud OAuth Console</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.setItem('solar_oauth_consent_config', JSON.stringify(oauthConfig));
+                      setSaveNotification('OAuth Consent Screen configuration saved locally!');
+                      setTimeout(() => setSaveNotification(null), 3000);
+                    }}
+                    className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-black font-bold text-xs rounded-lg transition-colors shadow-xs"
+                  >
+                    Save OAuth Configuration
+                  </button>
                 </div>
               </div>
             </div>
