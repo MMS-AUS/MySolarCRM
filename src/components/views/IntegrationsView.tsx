@@ -274,84 +274,102 @@ export const IntegrationsView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 bg-[#0a0a0a] overflow-y-auto p-4 sm:p-6 space-y-6 text-[#e5e7eb]">
+    <div className={`flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 transition-colors ${
+      isLight ? 'bg-slate-50 text-slate-900' : 'bg-[#0a0a0a] text-[#e5e7eb]'
+    }`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            <h1 className={`text-xl sm:text-2xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
               Solar Enterprise Integrations Hub
             </h1>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+              isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+            }`}>
               12 Active Ecosystem APIs
             </span>
           </div>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-gray-400'}`}>
             Mission-critical synchronization with Australian solar portals, CER BridgeSelect, OpenSolar, Xero, and VoIPLine
           </p>
         </div>
 
-        <div className="text-xs font-semibold text-gray-300 bg-[#1e1e1e] px-3 py-1.5 rounded-xl border border-[#2d2d2d] shadow-xs">
-          Connected: <strong className="text-white">{safeIntegrations.filter(i => i.enabled).length} / {safeIntegrations.length} Services</strong>
+        <div className={`text-xs font-semibold px-3 py-1.5 rounded-xl border shadow-xs ${
+          isLight ? 'bg-white text-slate-700 border-slate-200' : 'bg-[#1e1e1e] text-gray-300 border-[#2d2d2d]'
+        }`}>
+          Connected: <strong className={isLight ? 'text-slate-900' : 'text-white'}>{safeIntegrations.filter(i => i.enabled).length} / {safeIntegrations.length} Services</strong>
         </div>
       </div>
 
       {/* Connected Domain Whitelist Security Card */}
-      <div className="bg-[#1e1e1e] p-5 rounded-xl border border-[#2d2d2d] shadow-xs space-y-3">
+      <div className={`p-5 rounded-xl border shadow-xs space-y-3 transition-colors ${
+        isLight ? 'bg-white border-slate-200 shadow-soft-sm' : 'bg-[#1e1e1e] border-[#2d2d2d]'
+      }`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-[#bef264]" />
-            <h3 className="font-bold text-xs uppercase tracking-wider text-white">
+            <Globe className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-[#bef264]'}`} />
+            <h3 className={`font-bold text-xs uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-white'}`}>
               Connected Corporate Domain &amp; Access Whitelist
             </h3>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {domainRecord.status === 'verified' ? (
-              <span className="text-xs text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 border ${
+                isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+              }`}>
+                <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                 <span>Domain Verified (DNS Active)</span>
               </span>
             ) : (
-              <span className="text-xs text-amber-300 bg-amber-500/20 border border-amber-500/30 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 border ${
+                isLight ? 'bg-amber-50 text-amber-900 border-amber-200' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+              }`}>
+                <AlertTriangle className={`w-3.5 h-3.5 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
                 <span>Pending DNS Verification</span>
               </span>
             )}
-            <span className="text-xs text-gray-300 bg-[#262626] border border-[#333] font-bold px-2 py-0.5 rounded-full">
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
+              isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-[#262626] text-gray-300 border-[#333]'
+            }`}>
               SSO Active
             </span>
           </div>
         </div>
 
-        <div className="p-3 bg-[#161616] rounded-lg border border-[#262626] text-xs text-gray-300 space-y-1">
-          <strong className="text-white flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#bef264]" />
+        <div className={`p-3 rounded-lg border text-xs space-y-1 ${
+          isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-[#161616] border-[#262626] text-gray-300'
+        }`}>
+          <strong className={`flex items-center gap-1.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            <ShieldCheck className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-[#bef264]'}`} />
             DNS Record Verification &amp; Security Validation
           </strong>
-          <p className="text-gray-400 leading-relaxed text-[11px]">
+          <p className={`leading-relaxed text-[11px] ${isLight ? 'text-slate-600' : 'text-gray-400'}`}>
             To verify domain ownership and authorize enterprise dispatch, add the generated <strong>DNS TXT record</strong> to your domain registrar (Cloudflare, GoDaddy, Google Cloud DNS, Namecheap). Live lookup is verified via Google Public DNS.
           </p>
         </div>
 
         {/* Live DNS Record Configuration Box */}
-        <div className="p-3 bg-[#141414] rounded-lg border border-[#262626] space-y-2.5">
+        <div className={`p-3 rounded-lg border space-y-2.5 ${
+          isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-[#141414] border-[#262626]'
+        }`}>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-gray-300 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#bef264]" />
+            <span className={`text-[11px] font-bold flex items-center gap-1.5 ${isLight ? 'text-slate-800' : 'text-gray-300'}`}>
+              <span className={`w-2 h-2 rounded-full ${isLight ? 'bg-emerald-600' : 'bg-[#bef264]'}`} />
               Accurate DNS TXT Record for @{connectedDomain}:
             </span>
-            <span className="text-[10px] text-gray-500 font-mono">Standard RFC 1464 / Google Public DNS Compatible</span>
+            <span className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-gray-500'}`}>Standard RFC 1464 / Google Public DNS Compatible</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <div className="bg-[#1a1a1a] p-2 rounded-lg border border-[#2d2d2d]">
-              <span className="text-[10px] text-gray-500 block uppercase font-bold">Record Type</span>
-              <strong className="text-white font-mono text-xs">TXT</strong>
+            <div className={`p-2 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-[#1a1a1a] border-[#2d2d2d]'}`}>
+              <span className={`text-[10px] block uppercase font-bold ${isLight ? 'text-slate-500' : 'text-gray-500'}`}>Record Type</span>
+              <strong className={`font-mono text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>TXT</strong>
             </div>
 
-            <div className="bg-[#1a1a1a] p-2 rounded-lg border border-[#2d2d2d] flex items-center justify-between">
+            <div className={`p-2 rounded-lg border flex items-center justify-between ${isLight ? 'bg-white border-slate-200' : 'bg-[#1a1a1a] border-[#2d2d2d]'}`}>
               <div>
-                <span className="text-[10px] text-gray-500 block uppercase font-bold">Host / Name</span>
-                <strong className="text-white font-mono text-xs">@ <span className="text-gray-500 font-normal text-[10px]">(or _solarflow-verification)</span></strong>
+                <span className={`text-[10px] block uppercase font-bold ${isLight ? 'text-slate-500' : 'text-gray-500'}`}>Host / Name</span>
+                <strong className={`font-mono text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>@ <span className={`font-normal text-[10px] ${isLight ? 'text-slate-500' : 'text-gray-500'}`}>(or _solarflow-verification)</span></strong>
               </div>
               <button
                 type="button"
@@ -360,23 +378,23 @@ export const IntegrationsView: React.FC = () => {
                   setCopiedHost(true);
                   setTimeout(() => setCopiedHost(false), 2000);
                 }}
-                className="p-1 text-gray-400 hover:text-white rounded"
+                className={`p-1 rounded ${isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : 'text-gray-400 hover:text-white'}`}
                 title="Copy Host"
               >
-                {copiedHost ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedHost ? <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
 
-            <div className="bg-[#1a1a1a] p-2 rounded-lg border border-[#2d2d2d]">
-              <span className="text-[10px] text-gray-500 block uppercase font-bold">TTL</span>
-              <strong className="text-white font-mono text-xs">3600 (1 Hour)</strong>
+            <div className={`p-2 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-[#1a1a1a] border-[#2d2d2d]'}`}>
+              <span className={`text-[10px] block uppercase font-bold ${isLight ? 'text-slate-500' : 'text-gray-500'}`}>TTL</span>
+              <strong className={`font-mono text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>3600 (1 Hour)</strong>
             </div>
           </div>
 
-          <div className="bg-[#1a1a1a] p-2.5 rounded-lg border border-[#2d2d2d] flex items-center justify-between gap-2">
+          <div className={`p-2.5 rounded-lg border flex items-center justify-between gap-2 ${isLight ? 'bg-white border-slate-200' : 'bg-[#1a1a1a] border-[#2d2d2d]'}`}>
             <div className="overflow-hidden flex-1">
-              <span className="text-[10px] text-gray-500 block uppercase font-bold">TXT Value / Content</span>
-              <code className="text-xs text-[#bef264] font-mono truncate block select-all">
+              <span className={`text-[10px] block uppercase font-bold ${isLight ? 'text-slate-500' : 'text-gray-500'}`}>TXT Value / Content</span>
+              <code className={`text-xs font-mono truncate block select-all ${isLight ? 'text-emerald-700 font-semibold' : 'text-[#bef264]'}`}>
                 {domainRecord.dnsExpectedValue}
               </code>
             </div>
@@ -387,12 +405,14 @@ export const IntegrationsView: React.FC = () => {
                 setCopiedToken(true);
                 setTimeout(() => setCopiedToken(false), 2000);
               }}
-              className="px-2.5 py-1.5 rounded-md bg-[#262626] hover:bg-[#333] text-white text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors"
+              className={`px-2.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
+                isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300' : 'bg-[#262626] hover:bg-[#333] text-white'
+              }`}
             >
               {copiedToken ? (
                 <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-400">Copied</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className={isLight ? 'text-emerald-700 font-bold' : 'text-emerald-400'}>Copied</span>
                 </>
               ) : (
                 <>
@@ -407,19 +427,27 @@ export const IntegrationsView: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
           <form onSubmit={handleSaveDomain} className="flex items-center gap-2 max-w-md flex-1">
             <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-mono text-xs">@</span>
+              <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs ${isLight ? 'text-slate-500' : 'text-gray-500'}`}>@</span>
               <input
                 type="text"
                 value={domainInput}
                 onChange={e => setDomainInput(e.target.value)}
-                className="w-full text-xs font-mono pl-7 pr-3 py-2 bg-[#121212] border border-[#262626] rounded-lg outline-none focus:border-[#bef264] font-bold text-white placeholder:text-gray-500"
+                className={`w-full text-xs font-mono pl-7 pr-3 py-2 border rounded-lg outline-none font-bold ${
+                  isLight
+                    ? 'bg-white border-slate-300 text-slate-900 focus:border-emerald-600'
+                    : 'bg-[#121212] border-[#262626] text-white focus:border-[#bef264]'
+                }`}
                 placeholder="solarinstallers.com.au"
                 required
               />
             </div>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-black rounded-lg text-xs font-bold shadow-xs shrink-0 transition-colors"
+              className={`px-4 py-2 rounded-lg text-xs font-bold shadow-xs shrink-0 transition-colors ${
+                isLight
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-[#bef264] hover:bg-[#a3e635] text-black'
+              }`}
             >
               Update Domain
             </button>
@@ -430,25 +458,37 @@ export const IntegrationsView: React.FC = () => {
               type="button"
               onClick={handleQuickDnsCheck}
               disabled={isVerifyingDomainDns}
-              className="px-3 py-2 rounded-lg bg-[#262626] hover:bg-[#333] text-gray-200 border border-[#333] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                isLight
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                  : 'bg-[#262626] hover:bg-[#333] text-gray-200 border-[#333]'
+              }`}
               title="Query Google Public DNS over HTTPS"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-[#bef264] ${isVerifyingDomainDns ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-[#bef264]'} ${isVerifyingDomainDns ? 'animate-spin' : ''}`} />
               <span>{isVerifyingDomainDns ? 'Querying DNS...' : 'Verify DNS Now'}</span>
             </button>
             <button
               type="button"
               onClick={handleInstantHandshakeVerify}
-              className="px-3 py-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                isLight
+                  ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300'
+                  : 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border-emerald-500/30'
+              }`}
               title="Approve verification directly via Administrator Handshake"
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <ShieldCheck className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
               <span>Instant DNS Handshake</span>
             </button>
             <button
               type="button"
               onClick={() => openSettings('domain')}
-              className="px-3 py-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                isLight
+                  ? 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200'
+                  : 'bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border-blue-500/30'
+              }`}
             >
               <Sliders className="w-3.5 h-3.5" />
               <span>Registrar Guide</span>
@@ -457,16 +497,22 @@ export const IntegrationsView: React.FC = () => {
         </div>
 
         {domainDnsMessage && (
-          <div className="p-3 bg-[#161616] border border-[#2d2d2d] rounded-lg text-xs text-gray-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className={`p-3 border rounded-lg text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+            isLight
+              ? 'bg-slate-50 border-slate-200 text-slate-800'
+              : 'bg-[#161616] border-[#2d2d2d] text-gray-300'
+          }`}>
             <div className="flex items-start gap-2">
-              <Info className="w-4 h-4 text-[#bef264] mt-0.5 shrink-0" />
+              <Info className={`w-4 h-4 mt-0.5 shrink-0 ${isLight ? 'text-emerald-600' : 'text-[#bef264]'}`} />
               <span>{domainDnsMessage}</span>
             </div>
             {domainRecord.status !== 'verified' && (
               <button
                 type="button"
                 onClick={handleInstantHandshakeVerify}
-                className="text-xs text-[#bef264] hover:underline font-bold whitespace-nowrap ml-6 sm:ml-0"
+                className={`text-xs hover:underline font-bold whitespace-nowrap ml-6 sm:ml-0 ${
+                  isLight ? 'text-emerald-700' : 'text-[#bef264]'
+                }`}
               >
                 Approve via Instant Handshake &rarr;
               </button>
@@ -475,7 +521,7 @@ export const IntegrationsView: React.FC = () => {
         )}
 
         {domainSaved && (
-          <p className="text-xs text-emerald-400 font-medium flex items-center gap-1">
+          <p className={`text-xs font-medium flex items-center gap-1 ${isLight ? 'text-emerald-700 font-semibold' : 'text-emerald-400'}`}>
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>Corporate access control domain updated to @{connectedDomain}! Accurate DNS record generated above.</span>
           </p>
@@ -721,26 +767,36 @@ export const IntegrationsView: React.FC = () => {
       </div>
 
       {/* System Email, Alerts & Personal Integration Engine Card */}
-      <div className="bg-[#1e1e1e] p-5 rounded-xl border border-emerald-500/30 shadow-xs space-y-3">
+      <div className={`p-5 rounded-xl border shadow-xs space-y-3 transition-colors ${
+        isLight ? 'bg-white border-emerald-500/30 shadow-soft-sm' : 'bg-[#1e1e1e] border-emerald-500/30'
+      }`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+            <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${
+              isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+            }`}>
               <Bell className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-sm text-white">System Email, Automated Alerts &amp; Personal Integration</h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#bef264]/20 text-[#bef264] border border-[#bef264]/30 uppercase">
+                <h3 className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>System Email, Automated Alerts &amp; Personal Integration</h3>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
+                  isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-[#bef264]/20 text-[#bef264] border-[#bef264]/30'
+                }`}>
                   {personalEmailConfig.deliveryMode.replace('_', ' ')}
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  isLight ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                }`}>
                   {personalEmailConfig.adminAlertEmails?.length || 1} Admin Alert Recipient(s)
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  isLight ? 'bg-purple-50 text-purple-800 border-purple-200' : 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                }`}>
                   {personalEmailConfig.triggers ? Object.values(personalEmailConfig.triggers).filter(Boolean).length : 9} Triggers Active
                 </span>
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-gray-400'}`}>
                 Multi-channel outbound dispatch for customer portal logins, new leads, solar quotes, project milestones, install work orders, and Xero invoices. Allows custom SMTP, Google Workspace, or webhook relays.
               </p>
             </div>
@@ -752,9 +808,11 @@ export const IntegrationsView: React.FC = () => {
                 setSystemEmailAlertsTab('test');
                 setIsSystemEmailAlertsModalOpen(true);
               }}
-              className="px-3 py-2 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-white border border-[#333] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300' : 'bg-[#222] hover:bg-[#2a2a2a] text-white border-[#333]'
+              }`}
             >
-              <Send className="w-3.5 h-3.5 text-[#bef264]" />
+              <Send className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-700' : 'text-[#bef264]'}`} />
               <span>Send Test Email</span>
             </button>
             <button
@@ -762,7 +820,9 @@ export const IntegrationsView: React.FC = () => {
                 setSystemEmailAlertsTab('delivery');
                 setIsSystemEmailAlertsModalOpen(true);
               }}
-              className="px-3.5 py-2 rounded-lg bg-[#bef264] hover:bg-[#a3e635] text-black text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
+              className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs ${
+                isLight ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-[#bef264] hover:bg-[#a3e635] text-black'
+              }`}
             >
               <Sliders className="w-3.5 h-3.5" />
               <span>Configure Alerts &amp; SMTP</span>
@@ -770,22 +830,24 @@ export const IntegrationsView: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/10 text-[11px] text-gray-300">
-          <div className="bg-[#141414] p-2 rounded-lg border border-[#262626] flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="truncate">New Leads &amp; Quotes: <strong className="text-white">Active</strong></span>
+        <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t text-[11px] ${
+          isLight ? 'border-slate-200 text-slate-700' : 'border-white/10 text-gray-300'
+        }`}>
+          <div className={`p-2 rounded-lg border flex items-center gap-1.5 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#141414] border-[#262626]'}`}>
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span className="truncate">New Leads &amp; Quotes: <strong className={isLight ? 'text-slate-900' : 'text-white'}>Active</strong></span>
           </div>
-          <div className="bg-[#141414] p-2 rounded-lg border border-[#262626] flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="truncate">Milestones &amp; DNSP: <strong className="text-white">Active</strong></span>
+          <div className={`p-2 rounded-lg border flex items-center gap-1.5 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#141414] border-[#262626]'}`}>
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span className="truncate">Milestones &amp; DNSP: <strong className={isLight ? 'text-slate-900' : 'text-white'}>Active</strong></span>
           </div>
-          <div className="bg-[#141414] p-2 rounded-lg border border-[#262626] flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="truncate">Subcontractor Orders: <strong className="text-white">Active</strong></span>
+          <div className={`p-2 rounded-lg border flex items-center gap-1.5 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#141414] border-[#262626]'}`}>
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span className="truncate">Subcontractor Orders: <strong className={isLight ? 'text-slate-900' : 'text-white'}>Active</strong></span>
           </div>
-          <div className="bg-[#141414] p-2 rounded-lg border border-[#262626] flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="truncate">Customer Portal Logins: <strong className="text-white">Active</strong></span>
+          <div className={`p-2 rounded-lg border flex items-center gap-1.5 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#141414] border-[#262626]'}`}>
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span className="truncate">Customer Portal Logins: <strong className={isLight ? 'text-slate-900' : 'text-white'}>Active</strong></span>
           </div>
         </div>
       </div>
@@ -810,21 +872,29 @@ export const IntegrationsView: React.FC = () => {
           return (
             <div
               key={integ.id}
-              className={`bg-[#1e1e1e] rounded-xl border shadow-xs p-5 flex flex-col justify-between space-y-3 transition-all ${
+              className={`rounded-xl border shadow-xs p-5 flex flex-col justify-between space-y-3 transition-all ${
+                isLight ? 'bg-white' : 'bg-[#1e1e1e]'
+              } ${
                 integ.enabled
-                  ? 'border-[#2d2d2d] hover:border-[#bef264]/40'
-                  : 'border-[#262626]/60 opacity-60'
+                  ? isLight
+                    ? 'border-slate-200 hover:border-slate-300 shadow-soft-xs'
+                    : 'border-[#2d2d2d] hover:border-[#bef264]/40'
+                  : isLight
+                    ? 'border-slate-200/60 opacity-60'
+                    : 'border-[#262626]/60 opacity-60'
               }`}
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-lg bg-[#161616] border border-[#262626]">
+                    <div className={`p-2 rounded-lg border ${
+                      isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#161616] border-[#262626]'
+                    }`}>
                       {getIcon(integ.id)}
                     </div>
                     <div>
-                      <h3 className="font-bold text-sm text-white leading-tight">{integ.name}</h3>
-                      <span className="text-[10px] text-gray-400 font-medium">{integ.category}</span>
+                      <h3 className={`font-bold text-sm leading-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>{integ.name}</h3>
+                      <span className={`text-[10px] font-medium ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>{integ.category}</span>
                     </div>
                   </div>
 
@@ -836,23 +906,29 @@ export const IntegrationsView: React.FC = () => {
                       onChange={() => toggleIntegration(integ.id)}
                       className="sr-only peer"
                     />
-                    <div className="w-9 h-5 bg-[#2d2d2d] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[#121212] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#bef264]"></div>
+                    <div className={`w-9 h-5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all ${
+                      isLight ? 'bg-slate-300 peer-checked:bg-emerald-600' : 'bg-[#2d2d2d] peer-checked:bg-[#bef264]'
+                    }`}></div>
                   </label>
                 </div>
 
-                <p className="text-xs text-gray-400 leading-relaxed">{integ.description}</p>
+                <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-gray-400'}`}>{integ.description}</p>
               </div>
 
               <div>
                 {isTesting && (
-                  <div className="p-2 mb-2 bg-[#161616] border border-[#262626] rounded-lg text-[11px] text-gray-300 font-medium">
+                  <div className={`p-2 mb-2 rounded-lg text-[11px] font-medium border ${
+                    isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-[#161616] border-[#262626] text-gray-300'
+                  }`}>
                     {testResult.message}
                   </div>
                 )}
 
-                <div className="pt-3 border-t border-[#262626] flex items-center justify-between text-xs">
-                  <span className="text-[10px] text-gray-400">
-                    Sync: <strong className="text-gray-200">{integ.lastSyncTime || 'Real-time'}</strong>
+                <div className={`pt-3 border-t flex items-center justify-between text-xs ${
+                  isLight ? 'border-slate-200' : 'border-[#262626]'
+                }`}>
+                  <span className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
+                    Sync: <strong className={isLight ? 'text-slate-700' : 'text-gray-200'}>{integ.lastSyncTime || 'Real-time'}</strong>
                   </span>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -860,7 +936,11 @@ export const IntegrationsView: React.FC = () => {
                       <>
                         <button
                           onClick={() => openSettings('gmail')}
-                          className="px-2 py-1 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border border-[#333] text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                            isLight
+                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
+                              : 'bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border-[#333]'
+                          }`}
                           title="Gmail Sender & Template Settings"
                         >
                           <Settings className="w-3 h-3 text-red-400" />
@@ -880,7 +960,11 @@ export const IntegrationsView: React.FC = () => {
                       <>
                         <button
                           onClick={() => openSettings('calendar')}
-                          className="px-2 py-1 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border border-[#333] text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                            isLight
+                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
+                              : 'bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border-[#333]'
+                          }`}
                           title="Calendar Booking & Reminder Settings"
                         >
                           <Settings className="w-3 h-3 text-blue-400" />
@@ -900,7 +984,11 @@ export const IntegrationsView: React.FC = () => {
                       <>
                         <button
                           onClick={() => openGmb('settings')}
-                          className="px-2 py-1 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border border-[#333] text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                            isLight
+                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
+                              : 'bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border-[#333]'
+                          }`}
                           title="Google My Business Profile & API Credentials"
                         >
                           <Settings className="w-3 h-3 text-amber-400" />
@@ -920,7 +1008,11 @@ export const IntegrationsView: React.FC = () => {
                       <>
                         <button
                           onClick={() => openBridgeSelect('settings')}
-                          className="px-2 py-1 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border border-[#333] text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                            isLight
+                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
+                              : 'bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border-[#333]'
+                          }`}
                           title="CER BridgeSelect STC Portal & REC Registry Settings"
                         >
                           <Settings className="w-3 h-3 text-emerald-400" />
@@ -940,7 +1032,11 @@ export const IntegrationsView: React.FC = () => {
                       <>
                         <button
                           onClick={() => openXero('config')}
-                          className="px-2 py-1 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border border-[#333] text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                            isLight
+                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
+                              : 'bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border-[#333]'
+                          }`}
                           title="Xero Accounting Settings & Chart of Accounts"
                         >
                           <Settings className="w-3 h-3 text-sky-400" />
@@ -960,7 +1056,11 @@ export const IntegrationsView: React.FC = () => {
                       <>
                         <button
                           onClick={() => openOpenSolar('settings')}
-                          className="px-2 py-1 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border border-[#333] text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                            isLight
+                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
+                              : 'bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border-[#333]'
+                          }`}
                           title="OpenSolar API & Mapping Settings"
                         >
                           <Settings className="w-3 h-3 text-orange-400" />
@@ -980,7 +1080,11 @@ export const IntegrationsView: React.FC = () => {
                       <>
                         <button
                           onClick={() => openMessageMedia('settings')}
-                          className="px-2 py-1 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border border-[#333] text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                            isLight
+                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
+                              : 'bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border-[#333]'
+                          }`}
                           title="MessageMedia SMS Gateway Settings & Numbers"
                         >
                           <Settings className="w-3 h-3 text-indigo-400" />
@@ -1000,7 +1104,11 @@ export const IntegrationsView: React.FC = () => {
                       <>
                         <button
                           onClick={() => openMailchimp('settings')}
-                          className="px-2 py-1 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border border-[#333] text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                            isLight
+                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
+                              : 'bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border-[#333]'
+                          }`}
                           title="Mailchimp Marketing & Two-Way Sync Settings"
                         >
                           <Settings className="w-3 h-3 text-yellow-400" />
@@ -1020,7 +1128,11 @@ export const IntegrationsView: React.FC = () => {
                       <>
                         <button
                           onClick={() => openWhatsApp('settings')}
-                          className="px-2 py-1 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border border-[#333] text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                            isLight
+                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
+                              : 'bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border-[#333]'
+                          }`}
                           title="WhatsApp Business API Credentials & Webhook"
                         >
                           <Settings className="w-3 h-3 text-emerald-400" />
@@ -1040,7 +1152,11 @@ export const IntegrationsView: React.FC = () => {
                       <>
                         <button
                           onClick={() => openVoIPLine('settings')}
-                          className="px-2 py-1 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border border-[#333] text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                            isLight
+                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
+                              : 'bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border-[#333]'
+                          }`}
                           title="VoIPLine Telecom AU SIP & PBX Credentials"
                         >
                           <Settings className="w-3 h-3 text-teal-400" />
@@ -1060,7 +1176,11 @@ export const IntegrationsView: React.FC = () => {
                       <>
                         <button
                           onClick={() => openMetaAds('settings')}
-                          className="px-2 py-1 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border border-[#333] text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                            isLight
+                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
+                              : 'bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border-[#333]'
+                          }`}
                           title="Meta Ads & Messenger Sync Settings"
                         >
                           <Settings className="w-3 h-3 text-blue-400" />
@@ -1080,7 +1200,11 @@ export const IntegrationsView: React.FC = () => {
                       <>
                         <button
                           onClick={() => openTeams('settings')}
-                          className="px-2 py-1 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border border-[#333] text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                            isLight
+                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
+                              : 'bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border-[#333]'
+                          }`}
                           title="Microsoft Teams Webhook & Card Settings"
                         >
                           <Settings className="w-3 h-3 text-indigo-400" />
@@ -1098,9 +1222,13 @@ export const IntegrationsView: React.FC = () => {
 
                     <button
                       onClick={() => handleTest(integ)}
-                      className="px-2.5 py-1 rounded-lg bg-[#161616] hover:bg-[#262626] text-gray-300 hover:text-white border border-[#262626] text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                      className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                        isLight
+                          ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                          : 'bg-[#161616] hover:bg-[#262626] text-gray-300 hover:text-white border-[#262626]'
+                      }`}
                     >
-                      <RefreshCw className="w-3 h-3 text-gray-400" />
+                      <RefreshCw className={`w-3 h-3 ${isLight ? 'text-slate-500' : 'text-gray-400'}`} />
                       <span>Test Ping</span>
                     </button>
                   </div>

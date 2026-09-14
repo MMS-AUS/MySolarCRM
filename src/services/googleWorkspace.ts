@@ -84,6 +84,14 @@ export class UnauthorizedDomainError extends Error {
   }
 }
 
+export class UserCancelledError extends Error {
+  code = 'auth/popup-closed-by-user';
+  constructor(message?: string) {
+    super(message || 'The Google authentication popup was closed before signing in.');
+    this.name = 'UserCancelledError';
+  }
+}
+
 // Flag to indicate if we are in the middle of a sign-in flow
 let isSigningIn = false;
 // Cache the access token strictly in-memory per security guidelines
@@ -249,6 +257,15 @@ export const googleSignIn = async (options?: {
     } catch (firebaseErr: any) {
       console.warn('Firebase signInWithPopup error:', firebaseErr);
 
+      // Check if user cancelled or closed popup
+      if (
+        firebaseErr?.code === 'auth/popup-closed-by-user' ||
+        firebaseErr?.message?.includes('popup-closed-by-user')
+      ) {
+        console.info('Google sign-in popup was dismissed by user.');
+        throw new UserCancelledError('Sign-in cancelled: The popup window was closed before completing Google authorization.');
+      }
+
       // Check if domain is unauthorized
       if (
         firebaseErr?.code === 'auth/unauthorized-domain' ||
@@ -274,6 +291,10 @@ export const googleSignIn = async (options?: {
       throw firebaseErr;
     }
   } catch (error: any) {
+    if (error?.code === 'auth/popup-closed-by-user' || error instanceof UserCancelledError) {
+      // Benign user action - do not log as uncaught system error
+      throw error;
+    }
     console.error('Sign in error:', error);
     throw error;
   } finally {

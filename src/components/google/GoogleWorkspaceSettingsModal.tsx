@@ -170,6 +170,10 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
       setSaveNotification('Account switched successfully!');
       setTimeout(() => setSaveNotification(null), 3000);
     } catch (e: any) {
+      if (e?.code === 'auth/popup-closed-by-user' || e?.name === 'UserCancelledError') {
+        // User voluntarily dismissed or cancelled popup - clear loading without noisy error
+        return;
+      }
       const isUnauth =
         e?.code === 'auth/unauthorized-domain' ||
         e?.message?.includes('unauthorized-domain');

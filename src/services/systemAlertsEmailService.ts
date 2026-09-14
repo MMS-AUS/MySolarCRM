@@ -305,12 +305,13 @@ export async function sendSystemEmail(options: {
         };
       }
     } else {
-      // Direct connection or token without ya29. prefix - perform authorized system dispatch
+      // No live Google OAuth access token present
       result = {
-        success: true,
-        messageId: `ws-dir-${Date.now()}`,
-        status: 'delivered',
+        success: false,
+        messageId: `g-unauth-${Date.now()}`,
+        status: 'failed',
         channel: 'gmail_api',
+        error: 'Active Google Workspace OAuth authorization required. Please authorize with Google in Integrations -> Launch Hub or switch to Custom SMTP / Webhook.',
         timestamp
       };
     }
@@ -431,15 +432,6 @@ export async function sendSystemEmail(options: {
       channel: 'system_relay',
       timestamp
     };
-  }
-
-  // If live Google API returned failed (e.g. invalid ya29 token or lack of live internet),
-  // fallback gracefully to verified relay so user operations are never blocked
-  if (!result.success && config.deliveryMode === 'google_workspace') {
-    console.warn('Falling back to system relay logging for Google Workspace delivery');
-    result.status = 'sent';
-    result.success = true;
-    result.error = undefined;
   }
 
   // Record in Outbound Email Ledger
