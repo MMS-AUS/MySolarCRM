@@ -131,12 +131,14 @@
 .theme-light .bg-\[\#121212\],
 .theme-light .bg-\[\#131313\],
 .theme-light .bg-\[\#141414\],
+.theme-light .bg-\[\#151515\],
 .theme-light .bg-\[\#161616\],
 .theme-light .bg-\[\#171717\],
 .theme-light .bg-\[\#181818\],
 .theme-light .bg-\[\#191919\],
 .theme-light .bg-\[\#1a1a1a\],
 .theme-light .bg-\[\#1b1b1b\],
+.theme-light .bg-\[\#1b1e2b\],
 .theme-light .bg-\[\#1c1c1c\],
 .theme-light .bg-\[\#1e1e1e\],
 .theme-light .bg-\[\#1f1f1f\],
@@ -159,6 +161,13 @@
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
   color: #0f172a !important;
+}
+
+/* Clear dark gradients on content cards in light mode */
+.theme-light .bg-gradient-to-br:not(.badge-gradient):not(.bg-\[\#bef264\]),
+.theme-light .bg-gradient-to-r:not(.badge-gradient):not(.bg-\[\#bef264\]) {
+  background-image: none !important;
+  background-color: #ffffff !important;
 }
 
 /* Subtle soft hover for clean white cards */
@@ -213,6 +222,115 @@
 
 .theme-light .text-gray-500 {
   color: #64748b !important;
+}
+
+/* Light Mode High-Contrast Accent Colors for Badges & Buttons */
+.theme-light .text-blue-300,
+.theme-light .text-blue-400 {
+  color: #1d4ed8 !important;
+}
+
+.theme-light .text-red-300,
+.theme-light .text-red-400 {
+  color: #b91c1c !important;
+}
+
+.theme-light .text-emerald-300,
+.theme-light .text-emerald-400 {
+  color: #047857 !important;
+}
+
+.theme-light .text-amber-300,
+.theme-light .text-amber-400 {
+  color: #b45309 !important;
+}
+
+.theme-light .text-purple-300,
+.theme-light .text-purple-400 {
+  color: #6d28d9 !important;
+}
+
+.theme-light .text-indigo-300,
+.theme-light .text-indigo-400 {
+  color: #4338ca !important;
+}
+
+.theme-light .text-teal-300,
+.theme-light .text-teal-400 {
+  color: #0f766e !important;
+}
+
+.theme-light .text-orange-300,
+.theme-light .text-orange-400 {
+  color: #c2410c !important;
+}
+
+.theme-light .text-sky-300,
+.theme-light .text-sky-400 {
+  color: #0369a1 !important;
+}
+
+/* Badge and Button background contrast in light mode */
+.theme-light .bg-blue-600\/20,
+.theme-light .bg-blue-500\/20,
+.theme-light .bg-blue-500\/10 {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+}
+
+.theme-light .bg-red-600\/20,
+.theme-light .bg-red-500\/20,
+.theme-light .bg-red-500\/10,
+.theme-light .bg-rose-600\/20,
+.theme-light .bg-rose-500\/20,
+.theme-light .bg-rose-500\/10 {
+  background-color: #fef2f2 !important;
+  border-color: #fecaca !important;
+}
+
+.theme-light .bg-emerald-600\/20,
+.theme-light .bg-emerald-500\/20,
+.theme-light .bg-emerald-500\/10 {
+  background-color: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+}
+
+.theme-light .bg-amber-600\/20,
+.theme-light .bg-amber-500\/20,
+.theme-light .bg-amber-500\/10 {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+.theme-light .bg-purple-600\/20,
+.theme-light .bg-purple-500\/20,
+.theme-light .bg-purple-500\/10 {
+  background-color: #faf5ff !important;
+  border-color: #e9d5ff !important;
+}
+
+.theme-light .bg-teal-600\/20,
+.theme-light .bg-teal-500\/20 {
+  background-color: #f0fdfa !important;
+  border-color: #99f6e4 !important;
+}
+
+.theme-light .bg-orange-600\/20,
+.theme-light .bg-orange-500\/20 {
+  background-color: #fff7ed !important;
+  border-color: #fed7aa !important;
+}
+
+.theme-light .bg-sky-600\/20,
+.theme-light .bg-sky-500\/20 {
+  background-color: #f0f9ff !important;
+  border-color: #bae6fd !important;
+}
+
+.theme-light .bg-indigo-600\/20,
+.theme-light .bg-indigo-500\/20 {
+  background-color: #eef2ff !important;
+  border-color: #c7d2fe !important;
 }
 
 /* Retain high-contrast white text inside colored badges and primary buttons */

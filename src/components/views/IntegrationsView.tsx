@@ -50,7 +50,8 @@ import { getDomainRecord, verifyDomainViaDns, confirmDomainDnsHandshake } from '
 import { getPersonalEmailConfig } from '../../services/systemAlertsEmailService';
 
 export const IntegrationsView: React.FC = () => {
-  const { integrations = [], toggleIntegration, connectedDomain = 'solarinstallers.com.au', setConnectedDomain } = useApp();
+  const { integrations = [], toggleIntegration, connectedDomain = 'solarinstallers.com.au', setConnectedDomain, themeMode } = useApp();
+  const isLight = themeMode === 'corporate-slate';
   const [testResult, setTestResult] = useState<{ id: string; message: string } | null>(null);
   const [domainInput, setDomainInput] = useState(connectedDomain);
   const [domainSaved, setDomainSaved] = useState(false);
@@ -482,10 +483,16 @@ export const IntegrationsView: React.FC = () => {
       </div>
 
       {/* Featured Google Workspace Integration Panel */}
-      <div className="bg-gradient-to-br from-[#1b1e2b] via-[#161616] to-[#121212] p-5 sm:p-6 rounded-2xl border border-blue-500/30 shadow-lg space-y-4">
+      <div className={`p-5 sm:p-6 rounded-2xl border transition-all space-y-4 ${
+        isLight
+          ? 'bg-white border-blue-200 shadow-sm text-slate-800'
+          : 'bg-[#141414] border-blue-500/30 shadow-lg text-[#e5e7eb]'
+      }`}>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-3.5">
-            <div className="p-3 rounded-xl bg-white/10 border border-white/20 shrink-0">
+            <div className={`p-3 rounded-xl border shrink-0 ${
+              isLight ? 'bg-blue-50 border-blue-100' : 'bg-white/10 border-white/20'
+            }`}>
               <svg className="w-6 h-6" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -507,25 +514,37 @@ export const IntegrationsView: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                <h2 className={`text-base sm:text-lg font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   Google Workspace (Gmail &amp; Google Calendar)
                 </h2>
-                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-blue-400" />
+                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${
+                  isLight
+                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                    : 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                }`}>
+                  <ShieldCheck className={`w-3 h-3 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
                   OAuth 2.0 Configured
                 </span>
                 {isGoogleConnected ? (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                    isLight
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                  }`}>
+                    <CheckCircle2 className={`w-3 h-3 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                     Connected: {googleUserEmail}
                   </span>
                 ) : (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                    isLight
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                      : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                  }`}>
                     Ready to Connect
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-300 mt-1 max-w-2xl leading-relaxed">
+              <p className={`text-xs mt-1 max-w-2xl leading-relaxed ${isLight ? 'text-slate-600' : 'text-gray-300'}`}>
                 Official client proposal dispatches via <strong>Gmail API</strong> and automatic scheduling of solar site assessments &amp; installations via <strong>Google Calendar API</strong>.
               </p>
             </div>
@@ -534,26 +553,38 @@ export const IntegrationsView: React.FC = () => {
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <button
               onClick={() => openSettings('account')}
-              className="px-3 py-2 rounded-lg bg-[#222] hover:bg-[#2a2a2a] text-white border border-[#333] text-xs font-bold flex items-center gap-1.5 transition-colors"
+              className={`px-3 py-2 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                isLight
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                  : 'bg-[#222] hover:bg-[#2a2a2a] text-white border-[#333]'
+              }`}
               title="Confirm if connected with the right account or switch"
             >
-              <UserCheck className="w-3.5 h-3.5 text-blue-400" />
+              <UserCheck className={`w-3.5 h-3.5 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
               <span>Account Settings</span>
             </button>
 
             <button
               onClick={() => openSettings('gmail')}
-              className="px-3 py-2 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                isLight
+                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
+                  : 'bg-red-600/20 hover:bg-red-600/30 text-red-300 border-red-500/30'
+              }`}
             >
-              <Mail className="w-3.5 h-3.5 text-red-400" />
+              <Mail className={`w-3.5 h-3.5 ${isLight ? 'text-rose-600' : 'text-red-400'}`} />
               <span>Gmail Settings</span>
             </button>
 
             <button
               onClick={() => openSettings('calendar')}
-              className="px-3 py-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                isLight
+                  ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
+                  : 'bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border-blue-500/30'
+              }`}
             >
-              <Calendar className="w-3.5 h-3.5 text-blue-400" />
+              <Calendar className={`w-3.5 h-3.5 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
               <span>Calendar Settings</span>
             </button>
 
@@ -562,20 +593,28 @@ export const IntegrationsView: React.FC = () => {
                 setSystemEmailAlertsTab('delivery');
                 setIsSystemEmailAlertsModalOpen(true);
               }}
-              className="px-3 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                isLight
+                  ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200'
+                  : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/30'
+              }`}
               title="Configure personal SMTP, delivery mode, and automated email alerts"
             >
-              <Bell className="w-3.5 h-3.5 text-amber-400" />
+              <Bell className={`w-3.5 h-3.5 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
               <span>System Alerts &amp; SMTP</span>
             </button>
 
             <button
               onClick={() => openWorkspaceHub('audit')}
-              className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white border border-white/20 text-xs font-bold flex items-center gap-1.5 transition-colors"
+              className={`px-3 py-2 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                isLight
+                  ? 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900'
+                  : 'bg-white/10 hover:bg-white/15 text-white border-white/20'
+              }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#bef264]" />
+              <Sparkles className={`w-3.5 h-3.5 ${isLight ? 'text-amber-400' : 'text-[#bef264]'}`} />
               <span>Workspace Hub</span>
-              <ArrowRight className="w-3 h-3 text-gray-400" />
+              <ArrowRight className={`w-3 h-3 ${isLight ? 'text-slate-300' : 'text-gray-400'}`} />
             </button>
           </div>
         </div>
@@ -584,38 +623,50 @@ export const IntegrationsView: React.FC = () => {
         {googleUserEmail && (
           <div>
             {googleUserEmail.split('@')[1]?.toLowerCase() === connectedDomain.toLowerCase().trim() ? (
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-300 flex items-center justify-between flex-wrap gap-2">
+              <div className={`p-3 rounded-xl border text-xs flex items-center justify-between flex-wrap gap-2 ${
+                isLight
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+              }`}>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <CheckCircle2 className={`w-4 h-4 shrink-0 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                   <span>
                     <strong>Confirmed Right Account:</strong> Connected with verified corporate mailbox{' '}
-                    <strong className="underline text-white font-mono">{googleUserEmail}</strong> (matches @{connectedDomain}).
+                    <strong className={`underline font-mono ${isLight ? 'text-emerald-950 font-bold' : 'text-white'}`}>{googleUserEmail}</strong> (matches @{connectedDomain}).
                   </span>
                 </div>
                 <button
                   onClick={() => openSettings('account')}
-                  className="text-xs font-bold text-emerald-400 hover:text-white underline"
+                  className={`text-xs font-bold hover:underline ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}
                 >
                   View Details
                 </button>
               </div>
             ) : (
-              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className={`p-3 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                isLight
+                  ? 'bg-amber-50 border-amber-200 text-amber-900'
+                  : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+              }`}>
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                  <AlertTriangle className={`w-4 h-4 mt-0.5 shrink-0 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
                   <div>
-                    <span className="font-bold text-white block">
+                    <span className={`font-bold block ${isLight ? 'text-amber-950' : 'text-white'}`}>
                       Account Check: Connected with External/Personal Account ({googleUserEmail})
                     </span>
-                    <span className="text-[11px] text-amber-300/80 block mt-0.5">
-                      Your configured corporate domain is <strong>@{connectedDomain}</strong>. Outgoing client proposals will currently send from <span className="font-mono text-white">{googleUserEmail}</span>.
+                    <span className={`text-[11px] block mt-0.5 ${isLight ? 'text-amber-800' : 'text-amber-300/80'}`}>
+                      Your configured corporate domain is <strong>@{connectedDomain}</strong>. Outgoing client proposals will currently send from <span className="font-mono font-bold">{googleUserEmail}</span>.
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => openSettings('account')}
-                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-lg text-xs shadow-xs transition-colors"
+                    className={`px-3 py-1.5 font-bold rounded-lg text-xs shadow-xs transition-colors ${
+                      isLight
+                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                        : 'bg-amber-500 hover:bg-amber-400 text-black'
+                    }`}
                   >
                     Switch to @{connectedDomain} Account
                   </button>
@@ -626,22 +677,32 @@ export const IntegrationsView: React.FC = () => {
         )}
 
         {/* 4 Active Scopes Badges */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/10 text-[11px]">
-          <div className="bg-[#141414]/70 p-2 rounded-lg border border-[#262626] flex items-center gap-1.5">
-            <Mail className="w-3 h-3 text-red-400 shrink-0" />
-            <span className="truncate text-gray-300">gmail.send (Proposals)</span>
+        <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t text-[11px] ${
+          isLight ? 'border-slate-200' : 'border-white/10'
+        }`}>
+          <div className={`p-2 rounded-lg border flex items-center gap-1.5 ${
+            isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-[#141414]/70 border-[#262626] text-gray-300'
+          }`}>
+            <Mail className="w-3 h-3 text-red-500 shrink-0" />
+            <span className="truncate">gmail.send (Proposals)</span>
           </div>
-          <div className="bg-[#141414]/70 p-2 rounded-lg border border-[#262626] flex items-center gap-1.5">
-            <Mail className="w-3 h-3 text-red-400 shrink-0" />
-            <span className="truncate text-gray-300">gmail.readonly (Inbox Sync)</span>
+          <div className={`p-2 rounded-lg border flex items-center gap-1.5 ${
+            isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-[#141414]/70 border-[#262626] text-gray-300'
+          }`}>
+            <Mail className="w-3 h-3 text-red-500 shrink-0" />
+            <span className="truncate">gmail.readonly (Inbox Sync)</span>
           </div>
-          <div className="bg-[#141414]/70 p-2 rounded-lg border border-[#262626] flex items-center gap-1.5">
-            <Calendar className="w-3 h-3 text-blue-400 shrink-0" />
-            <span className="truncate text-gray-300">calendar.events (Booking)</span>
+          <div className={`p-2 rounded-lg border flex items-center gap-1.5 ${
+            isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-[#141414]/70 border-[#262626] text-gray-300'
+          }`}>
+            <Calendar className="w-3 h-3 text-blue-500 shrink-0" />
+            <span className="truncate">calendar.events (Booking)</span>
           </div>
-          <div className="bg-[#141414]/70 p-2 rounded-lg border border-[#262626] flex items-center gap-1.5">
-            <Calendar className="w-3 h-3 text-blue-400 shrink-0" />
-            <span className="truncate text-gray-300">calendar.readonly (Availability)</span>
+          <div className={`p-2 rounded-lg border flex items-center gap-1.5 ${
+            isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-[#141414]/70 border-[#262626] text-gray-300'
+          }`}>
+            <Calendar className="w-3 h-3 text-blue-500 shrink-0" />
+            <span className="truncate">calendar.readonly (Availability)</span>
           </div>
         </div>
       </div>
