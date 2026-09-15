@@ -182,7 +182,14 @@ export const GoogleWorkspaceModal: React.FC<GoogleWorkspaceModalProps> = ({
         loadUpcomingEvents();
       }
     } catch (err: any) {
-      if (err?.code === 'auth/popup-closed-by-user' || err?.name === 'UserCancelledError') {
+      if (
+        err?.code === 'auth/popup-closed-by-user' ||
+        err?.code === 'auth/cancelled-popup-request' ||
+        err?.name === 'UserCancelledError' ||
+        err?.message?.includes('popup-closed-by-user') ||
+        err?.message?.includes('The popup window was closed') ||
+        err?.message?.includes('Sign-in cancelled')
+      ) {
         // User closed popup without completing sign-in; reset state without persistent alert
         setIsUnauthorizedDomain(false);
         setAuthError(null);

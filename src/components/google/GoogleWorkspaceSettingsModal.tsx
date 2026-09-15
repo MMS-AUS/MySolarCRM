@@ -165,12 +165,20 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
     setIsSigningIn(true);
     setDomainAuthError(null);
     try {
-      await googleSignIn({ prompt: 'select_account' });
-      await loadDiagnostics();
-      setSaveNotification('Account switched successfully!');
-      setTimeout(() => setSaveNotification(null), 3000);
+      const res = await googleSignIn({ prompt: 'select_account' });
+      if (res) {
+        await loadDiagnostics();
+        setSaveNotification('Account switched successfully!');
+        setTimeout(() => setSaveNotification(null), 3000);
+      }
     } catch (e: any) {
-      if (e?.code === 'auth/popup-closed-by-user' || e?.name === 'UserCancelledError') {
+      if (
+        e?.code === 'auth/popup-closed-by-user' ||
+        e?.code === 'auth/cancelled-popup-request' ||
+        e?.name === 'UserCancelledError' ||
+        e?.message?.includes('popup-closed-by-user') ||
+        e?.message?.includes('The popup window was closed')
+      ) {
         // User voluntarily dismissed or cancelled popup - clear loading without noisy error
         return;
       }

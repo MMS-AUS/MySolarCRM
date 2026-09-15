@@ -48,12 +48,14 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   initialTab?: 'delivery' | 'sender' | 'triggers' | 'test' | 'logs';
+  onOpenGoogleWorkspace?: () => void;
 }
 
 export const SystemEmailAlertsModal: React.FC<Props> = ({
   isOpen,
   onClose,
-  initialTab = 'delivery'
+  initialTab = 'delivery',
+  onOpenGoogleWorkspace
 }) => {
   const { currentUser: appUser, connectedDomain } = useApp();
   const [activeTab, setActiveTab] = useState<'delivery' | 'sender' | 'triggers' | 'test' | 'logs'>(initialTab);
@@ -63,6 +65,7 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
 
   // Status & Feedback
   const [isSaving, setIsSaving] = useState(false);
+  const [isSwitchingAccount, setIsSwitchingAccount] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; details?: any } | null>(null);
@@ -439,11 +442,26 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                     </button>
                     <button
                       type="button"
-                      onClick={() => googleSignIn({ prompt: 'select_account' }).then(loadDiagnostics)}
-                      className="px-3.5 py-1.5 bg-[#252525] hover:bg-[#333] text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 border border-[#3e3e3e]"
+                      disabled={isSwitchingAccount}
+                      onClick={async () => {
+                        setIsSwitchingAccount(true);
+                        try {
+                          const res = await googleSignIn({ prompt: 'select_account' });
+                          if (res) {
+                            loadDiagnostics();
+                            setSaveSuccess('Google account switched successfully!');
+                            setTimeout(() => setSaveSuccess(null), 3000);
+                          }
+                        } catch (err: any) {
+                          console.info('Switch Google account dismissal:', err);
+                        } finally {
+                          setIsSwitchingAccount(false);
+                        }
+                      }}
+                      className="px-3.5 py-1.5 bg-[#252525] hover:bg-[#333] text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 border border-[#3e3e3e] disabled:opacity-50"
                     >
-                      <UserCheck className="w-3.5 h-3.5 text-blue-400" />
-                      <span>Switch Google Account</span>
+                      <UserCheck className={`w-3.5 h-3.5 text-blue-400 ${isSwitchingAccount ? 'animate-pulse' : ''}`} />
+                      <span>{isSwitchingAccount ? 'Opening Google...' : 'Switch Google Account'}</span>
                     </button>
                   </div>
                 </div>
@@ -971,6 +989,32 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                       <div>Status: <span className="text-emerald-400 font-bold">{testResult.details.status}</span></div>
                       <div>Message ID: <span className="text-gray-400">{testResult.details.messageId}</span></div>
                       <div>Timestamp: <span className="text-gray-400">{testResult.details.timestamp}</span></div>
+                    </div>
+                  )}
+
+                  {!testResult.success && testResult.message.includes('Google Workspace') && (
+                    <div className="pt-2 flex items-center gap-2 flex-wrap">
+                      {onOpenGoogleWorkspace && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            onOpenGoogleWorkspace();
+                          }}
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition-colors shadow-xs"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Authorize Google Workspace Now</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('delivery')}
+                        className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-colors border border-white/20"
+                      >
+                        <Sliders className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Switch Delivery Mode (Custom SMTP / Webhook)</span>
+                      </button>
                     </div>
                   )}
                 </div>

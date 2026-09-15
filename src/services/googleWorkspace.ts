@@ -157,6 +157,15 @@ export const signInWithGoogleIdentityServices = async (): Promise<{ user: any; a
         scope: SCOPES.join(' '),
         callback: async (resp: any) => {
           if (resp.error) {
+            if (
+              resp.error === 'access_denied' ||
+              resp.error === 'popup_closed_by_user' ||
+              resp.error === 'user_cancelled'
+            ) {
+              console.info('Google Identity Services popup was dismissed or cancelled by user.');
+              resolve(null);
+              return;
+            }
             reject(new Error(resp.error_description || resp.error));
             return;
           }
@@ -260,10 +269,12 @@ export const googleSignIn = async (options?: {
       // Check if user cancelled or closed popup
       if (
         firebaseErr?.code === 'auth/popup-closed-by-user' ||
-        firebaseErr?.message?.includes('popup-closed-by-user')
+        firebaseErr?.code === 'auth/cancelled-popup-request' ||
+        firebaseErr?.message?.includes('popup-closed-by-user') ||
+        firebaseErr?.message?.includes('The popup window was closed')
       ) {
         console.info('Google sign-in popup was dismissed by user.');
-        throw new UserCancelledError('Sign-in cancelled: The popup window was closed before completing Google authorization.');
+        return null;
       }
 
       // Check if domain is unauthorized
@@ -291,9 +302,17 @@ export const googleSignIn = async (options?: {
       throw firebaseErr;
     }
   } catch (error: any) {
-    if (error?.code === 'auth/popup-closed-by-user' || error instanceof UserCancelledError) {
-      // Benign user action - do not log as uncaught system error
-      throw error;
+    if (
+      error?.code === 'auth/popup-closed-by-user' ||
+      error?.code === 'auth/cancelled-popup-request' ||
+      error instanceof UserCancelledError ||
+      error?.message?.includes('popup-closed-by-user') ||
+      error?.message?.includes('The popup window was closed') ||
+      error?.message?.includes('Sign-in cancelled')
+    ) {
+      // Benign user action - do not throw as uncaught system error
+      console.info('Google sign-in popup dismissed or cancelled by user.');
+      return null;
     }
     console.error('Sign in error:', error);
     throw error;

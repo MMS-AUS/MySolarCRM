@@ -596,10 +596,10 @@ export const IntegrationsView: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap w-full xl:w-auto xl:justify-end">
             <button
               onClick={() => openSettings('account')}
-              className={`px-3 py-2 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-colors ${
+              className={`px-3 py-2 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0 ${
                 isLight
                   ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
                   : 'bg-[#222] hover:bg-[#2a2a2a] text-white border-[#333]'
@@ -612,7 +612,7 @@ export const IntegrationsView: React.FC = () => {
 
             <button
               onClick={() => openSettings('oauth')}
-              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0 ${
                 isLight
                   ? 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200'
                   : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border-blue-500/30'
@@ -625,7 +625,7 @@ export const IntegrationsView: React.FC = () => {
 
             <button
               onClick={() => openSettings('gmail')}
-              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0 ${
                 isLight
                   ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
                   : 'bg-red-600/20 hover:bg-red-600/30 text-red-300 border-red-500/30'
@@ -637,7 +637,7 @@ export const IntegrationsView: React.FC = () => {
 
             <button
               onClick={() => openSettings('calendar')}
-              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0 ${
                 isLight
                   ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
                   : 'bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border-blue-500/30'
@@ -652,7 +652,7 @@ export const IntegrationsView: React.FC = () => {
                 setSystemEmailAlertsTab('delivery');
                 setIsSystemEmailAlertsModalOpen(true);
               }}
-              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0 ${
                 isLight
                   ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200'
                   : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/30'
@@ -665,15 +665,15 @@ export const IntegrationsView: React.FC = () => {
 
             <button
               onClick={() => openWorkspaceHub('audit')}
-              className={`px-3 py-2 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-colors ${
+              className={`px-3.5 py-2 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm shrink-0 ${
                 isLight
-                  ? 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900'
-                  : 'bg-white/10 hover:bg-white/15 text-white border-white/20'
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-700'
+                  : 'bg-lime-500 hover:bg-lime-400 text-slate-950 border-lime-400'
               }`}
             >
-              <Sparkles className={`w-3.5 h-3.5 ${isLight ? 'text-amber-400' : 'text-[#bef264]'}`} />
-              <span>Workspace Hub</span>
-              <ArrowRight className={`w-3 h-3 ${isLight ? 'text-slate-300' : 'text-gray-400'}`} />
+              <Sparkles className={`w-3.5 h-3.5 ${isLight ? 'text-amber-300' : 'text-slate-900'}`} />
+              <span className="font-bold">Workspace Hub</span>
+              <ArrowRight className={`w-3.5 h-3.5 ${isLight ? 'text-blue-100' : 'text-slate-900'}`} />
             </button>
           </div>
         </div>
@@ -1332,6 +1332,7 @@ export const IntegrationsView: React.FC = () => {
           setPersonalEmailConfig(getPersonalEmailConfig());
         }}
         initialTab={systemEmailAlertsTab}
+        onOpenGoogleWorkspace={() => openWorkspaceHub('gmail')}
       />
     </div>
   );
