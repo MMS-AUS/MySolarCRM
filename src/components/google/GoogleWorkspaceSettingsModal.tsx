@@ -99,22 +99,40 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
   const [oauthConfig, setOAuthConfig] = useState<OAuthConsentConfig>(() => {
     try {
       const saved = localStorage.getItem('solar_oauth_consent_config');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Ensure stale akash.mohite@gmail.com is purged and admin@makemysolar.com.au is included
+        if (parsed.testUsers) {
+          parsed.testUsers = parsed.testUsers
+            .map((u: string) => u.toLowerCase() === 'akash.mohite@gmail.com' ? 'admin@makemysolar.com.au' : u)
+            .filter((u: string) => u && u.toLowerCase() !== 'akash.mohite@gmail.com');
+          if (!parsed.testUsers.includes('admin@makemysolar.com.au')) {
+            parsed.testUsers.unshift('admin@makemysolar.com.au');
+          }
+        }
+        if (parsed.userSupportEmail?.toLowerCase() === 'akash.mohite@gmail.com') {
+          parsed.userSupportEmail = 'admin@makemysolar.com.au';
+        }
+        if (parsed.developerContactEmail?.toLowerCase() === 'akash.mohite@gmail.com') {
+          parsed.developerContactEmail = 'admin@makemysolar.com.au';
+        }
+        return parsed;
+      }
     } catch (e) {
       console.error(e);
     }
     return {
-      appName: 'Apex Solar CRM & Operations Hub',
-      userSupportEmail: appUser.email || `admin@${connectedDomain}`,
+      appName: 'MakeMySolar CRM & Operations Hub',
+      userSupportEmail: appUser.email || 'admin@makemysolar.com.au',
       appLogoUrl: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?w=128&auto=format&fit=crop&q=80',
       appDomain: `https://${connectedDomain}`,
       privacyPolicyUrl: `https://${connectedDomain}/privacy`,
       termsOfServiceUrl: `https://${connectedDomain}/terms`,
-      authorizedDomains: [connectedDomain, 'google.com', 'firebaseapp.com'],
-      developerContactEmail: appUser.email || `support@${connectedDomain}`,
+      authorizedDomains: [connectedDomain, 'makemysolar.com.au', 'google.com', 'firebaseapp.com'],
+      developerContactEmail: appUser.email || 'admin@makemysolar.com.au',
       userType: 'external',
       publishingStatus: 'testing',
-      testUsers: [appUser.email || 'akash.mohite@gmail.com', `operations@${connectedDomain}`].filter(Boolean)
+      testUsers: ['admin@makemysolar.com.au', appUser.email, `operations@${connectedDomain}`].filter((v, i, a) => Boolean(v) && a.indexOf(v) === i)
     };
   });
   const [newTestUserEmail, setNewTestUserEmail] = useState('');
@@ -874,16 +892,32 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
                 <p className="text-gray-300 leading-relaxed text-[11px]">
                   The <strong>OAuth Consent Screen</strong> is configured in the <strong>Google Cloud Platform (GCP) Console</strong>. It determines what information your users see when authenticating with Google Workspace to dispatch client solar proposals via Gmail and sync appointments in Google Calendar.
                 </p>
-                <div className="p-3 bg-[#111] rounded-lg border border-[#262626] font-mono text-[11px] text-gray-300 space-y-1">
-                  <div className="flex items-center gap-2 text-blue-400 font-bold">
-                    <Info className="w-3.5 h-3.5" />
-                    <span>Exact Path in Google Cloud Console:</span>
+                <div className="p-3 bg-[#111] rounded-lg border border-[#262626] font-mono text-[11px] text-gray-300 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-blue-400 font-bold">
+                      <Info className="w-3.5 h-3.5" />
+                      <span>Google Cloud Project for this App:</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] font-mono font-bold">
+                      fabled-direction-jxjsq
+                    </span>
+                  </div>
+                  <div className="text-gray-300 pl-5 text-[11px]">
+                    Project ID: <strong className="text-white font-mono">fabled-direction-jxjsq</strong> (Project # 427218815020)
                   </div>
                   <div className="text-white pl-5 font-semibold">
-                    Google Cloud Console → APIs &amp; Services → OAuth consent screen
+                    In GCP Console: Select project <strong className="text-[#bef264]">fabled-direction-jxjsq</strong> in top bar → APIs &amp; Services → OAuth consent screen
                   </div>
                   <div className="text-gray-400 pl-5 text-[10px]">
-                    Direct URL: <span className="text-blue-300 underline">https://console.cloud.google.com/apis/credentials/consent</span>
+                    Direct URL to project OAuth screen:{' '}
+                    <a
+                      href="https://console.cloud.google.com/apis/credentials/consent?project=fabled-direction-jxjsq"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-300 underline font-mono hover:text-blue-200"
+                    >
+                      https://console.cloud.google.com/apis/credentials/consent?project=fabled-direction-jxjsq
+                    </a>
                   </div>
                 </div>
               </div>

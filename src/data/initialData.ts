@@ -480,14 +480,14 @@ export const INITIAL_DROPDOWNS: DynamicDropdownConfig = {
 export const INITIAL_USERS: UserProfile[] = [
   {
     id: 'usr-admin-1',
-    name: 'Akash Mohite',
-    email: 'akash.mohite@gmail.com',
+    name: 'Admin MakeMySolar',
+    email: 'admin@makemysolar.com.au',
     phone: '+61 412 889 012',
     voipLineNumber: '+61 2 8311 4920',
     messageMediaSenderId: '+61 2 8311 4920',
     role: 'admin',
     department: 'Management',
-    assignedDomain: 'mysolarcrm.com.au',
+    assignedDomain: 'makemysolar.com.au',
     isPasswordSet: true,
     inviteStatus: 'active'
   },
@@ -532,7 +532,7 @@ export const INITIAL_USERS: UserProfile[] = [
   }
 ];
 
-export const INITIAL_CONNECTED_DOMAINS = ['mysolarcrm.com.au', 'solarenergy.com.au'];
+export const INITIAL_CONNECTED_DOMAINS = ['makemysolar.com.au', 'mysolarcrm.com.au', 'solarenergy.com.au'];
 
 export const INITIAL_PORTAL_ADDRESSES: SystemPortalAddresses = {
   customerPortal: {

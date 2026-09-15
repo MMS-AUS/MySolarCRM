@@ -301,7 +301,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Load or initialize state from localStorage
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
     const saved = localStorage.getItem('solar_user');
-    return saved ? JSON.parse(saved) : INITIAL_USERS[0];
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed?.email?.toLowerCase() === 'akash.mohite@gmail.com') {
+          return {
+            ...parsed,
+            name: parsed.name === 'Akash Mohite' ? 'Admin MakeMySolar' : parsed.name,
+            email: 'admin@makemysolar.com.au',
+            assignedDomain: 'makemysolar.com.au'
+          };
+        }
+        return parsed;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_USERS[0];
   });
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -573,7 +589,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [employees, setEmployees] = useState<UserProfile[]>(() => {
     const saved = localStorage.getItem('solar_employees');
-    return saved ? JSON.parse(saved) : INITIAL_USERS;
+    if (saved) {
+      try {
+        const parsed: UserProfile[] = JSON.parse(saved);
+        return parsed.map(u =>
+          u.email?.toLowerCase() === 'akash.mohite@gmail.com'
+            ? {
+                ...u,
+                name: u.name === 'Akash Mohite' ? 'Admin MakeMySolar' : u.name,
+                email: 'admin@makemysolar.com.au',
+                assignedDomain: 'makemysolar.com.au'
+              }
+            : u
+        );
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_USERS;
   });
 
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(() => {
@@ -627,7 +660,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [systemUsers, setSystemUsers] = useState<UserProfile[]>(() => {
     const saved = localStorage.getItem('solar_system_users');
-    return saved ? JSON.parse(saved) : INITIAL_USERS;
+    if (saved) {
+      try {
+        const parsed: UserProfile[] = JSON.parse(saved);
+        return parsed.map(u =>
+          u.email?.toLowerCase() === 'akash.mohite@gmail.com'
+            ? {
+                ...u,
+                name: u.name === 'Akash Mohite' ? 'Admin MakeMySolar' : u.name,
+                email: 'admin@makemysolar.com.au',
+                assignedDomain: 'makemysolar.com.au'
+              }
+            : u
+        );
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_USERS;
   });
 
   // Dynamic Features & System Functionalities state

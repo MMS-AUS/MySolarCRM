@@ -52,7 +52,15 @@ const CALENDAR_EVENTS_STORAGE_KEY = 'solar_workspace_saved_events';
 export const getConnectedWorkspaceUser = (): ConnectedWorkspaceUser | null => {
   try {
     const raw = localStorage.getItem(SESSION_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.email?.toLowerCase() === 'akash.mohite@gmail.com') {
+        // Clear the old user session so the user is prompted with admin@makemysolar.com.au
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+        return null;
+      }
+      return parsed;
+    }
   } catch (e) {
     console.error('Failed to read workspace user session:', e);
   }
