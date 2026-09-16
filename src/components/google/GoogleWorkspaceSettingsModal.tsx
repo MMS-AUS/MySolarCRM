@@ -320,7 +320,7 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <span>Google Workspace &amp; Account Settings</span>
+                <span>Google Integrations &amp; Account Settings</span>
                 {diagnostics?.isConnected ? (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />
@@ -478,17 +478,6 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Connect as {appUser.email || `admin@${connectedDomain}`}</span>
                       </button>
-                      <a
-                        href="https://console.cloud.google.com/projectcreate"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1.5"
-                        title="Create a new Google Cloud Console Project named MySolarCRM"
-                      >
-                        <PlusCircle className="w-3.5 h-3.5" />
-                        <span>Create Project in Google Cloud Console</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
                       <button
                         type="button"
                         onClick={() => setShowDirectConnectForm(!showDirectConnectForm)}

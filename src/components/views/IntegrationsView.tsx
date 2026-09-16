@@ -561,15 +561,15 @@ export const IntegrationsView: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className={`text-base sm:text-lg font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  Google Workspace (Gmail &amp; Google Calendar)
+                  Google Integrations (Gmail, Google Calendar &amp; Google My Business)
                 </h2>
                 <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${
                   isLight
-                    ? 'bg-blue-50 text-blue-700 border-blue-200'
-                    : 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                 }`}>
-                  <ShieldCheck className={`w-3 h-3 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
-                  OAuth 2.0 Configured
+                  <ShieldCheck className={`w-3 h-3 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
+                  Direct Login Enabled
                 </span>
                 {isGoogleConnected ? (
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
@@ -578,7 +578,7 @@ export const IntegrationsView: React.FC = () => {
                       : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                   }`}>
                     <CheckCircle2 className={`w-3 h-3 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-                    Connected: {googleUserEmail}
+                    Active: {googleUserEmail}
                   </span>
                 ) : (
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
@@ -591,36 +591,23 @@ export const IntegrationsView: React.FC = () => {
                 )}
               </div>
               <p className={`text-xs mt-1 max-w-2xl leading-relaxed ${isLight ? 'text-slate-600' : 'text-gray-300'}`}>
-                Official client proposal dispatches via <strong>Gmail API</strong> and automatic scheduling of solar site assessments &amp; installations via <strong>Google Calendar API</strong>.
+                Seamless client email communication via <strong>Gmail</strong>, automated installation &amp; assessment bookings via <strong>Google Calendar</strong>, and customer review publication via <strong>Google My Business</strong>. Powered directly by your CRM email and password login.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap w-full xl:w-auto xl:justify-end">
+          <div className="flex items-center gap-2 flex-wrap w-full xl:w-auto xl:justify-end overflow-hidden">
             <button
               onClick={() => openSettings('account')}
-              className={`px-3 py-2 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0 ${
+              className={`px-3 py-2 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0 shadow-xs ${
                 isLight
-                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                  : 'bg-[#222] hover:bg-[#2a2a2a] text-white border-[#333]'
+                  ? 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900'
+                  : 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700'
               }`}
-              title="Confirm if connected with the right account or switch"
+              title="View account connection details"
             >
-              <UserCheck className={`w-3.5 h-3.5 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
+              <UserCheck className="w-3.5 h-3.5 text-blue-400" />
               <span>Account Settings</span>
-            </button>
-
-            <button
-              onClick={() => openSettings('oauth')}
-              className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0 ${
-                isLight
-                  ? 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200'
-                  : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border-blue-500/30'
-              }`}
-              title="View Google Cloud OAuth Consent Screen URL, authorized domains, test users, and configuration settings"
-            >
-              <ShieldCheck className={`w-3.5 h-3.5 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
-              <span>OAuth Consent Screen</span>
             </button>
 
             <button
@@ -632,7 +619,7 @@ export const IntegrationsView: React.FC = () => {
               }`}
             >
               <Mail className={`w-3.5 h-3.5 ${isLight ? 'text-rose-600' : 'text-red-400'}`} />
-              <span>Gmail Settings</span>
+              <span>Gmail</span>
             </button>
 
             <button
@@ -644,7 +631,7 @@ export const IntegrationsView: React.FC = () => {
               }`}
             >
               <Calendar className={`w-3.5 h-3.5 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
-              <span>Calendar Settings</span>
+              <span>Calendar</span>
             </button>
 
             <button
@@ -660,7 +647,7 @@ export const IntegrationsView: React.FC = () => {
               title="Configure personal SMTP, delivery mode, and automated email alerts"
             >
               <Bell className={`w-3.5 h-3.5 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
-              <span>System Alerts &amp; SMTP</span>
+              <span>System Alerts</span>
             </button>
 
             <button
@@ -672,7 +659,7 @@ export const IntegrationsView: React.FC = () => {
               }`}
             >
               <Sparkles className={`w-3.5 h-3.5 ${isLight ? 'text-amber-300' : 'text-slate-900'}`} />
-              <span className="font-bold">Workspace Hub</span>
+              <span className="font-bold">Google Hub</span>
               <ArrowRight className={`w-3.5 h-3.5 ${isLight ? 'text-blue-100' : 'text-slate-900'}`} />
             </button>
           </div>

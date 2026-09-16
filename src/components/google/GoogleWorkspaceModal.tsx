@@ -418,10 +418,10 @@ export const GoogleWorkspaceModal: React.FC<GoogleWorkspaceModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-bold text-white leading-tight">
-                  Google Workspace Suite
+                  Google Integrations Suite
                 </h2>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                  Gmail &amp; Google Calendar
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  Gmail, Calendar &amp; Google My Business
                 </span>
               </div>
               <p className="text-xs text-gray-400">
@@ -581,17 +581,6 @@ export const GoogleWorkspaceModal: React.FC<GoogleWorkspaceModalProps> = ({
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Connect {appUser.email || `admin@${connectedDomain}`}</span>
                 </button>
-                <a
-                  href="https://console.cloud.google.com/projectcreate"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1.5"
-                  title="Create a new Google Cloud Console Project named MySolarCRM"
-                >
-                  <PlusCircle className="w-3.5 h-3.5" />
-                  <span>Create Project in GCP</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
                 <button
                   type="button"
                   onClick={() => setShowAdvancedAuth(!showAdvancedAuth)}

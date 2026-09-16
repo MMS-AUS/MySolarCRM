@@ -1745,7 +1745,7 @@ export const INITIAL_LEAVE_REQUESTS: LeaveRequest[] = [
 export const INITIAL_INTEGRATIONS: IntegrationConfig[] = [
   {
     id: 'gmail',
-    name: 'Google Workspace Gmail',
+    name: 'Gmail Integration',
     category: 'Customer Communication',
     enabled: true,
     description: 'Two-way customer email synchronization and lead correspondence logging.',

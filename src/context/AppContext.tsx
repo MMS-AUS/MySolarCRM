@@ -84,7 +84,7 @@ import {
   parseAudAccounts
 } from '../utils/australianPostcodes';
 import { dispatchSystemAlert, getPersonalEmailConfig } from '../services/systemAlertsEmailService';
-import { getConnectedWorkspaceUser } from '../services/googleWorkspace';
+import { getConnectedWorkspaceUser, connectDirectWorkspaceAccount } from '../services/googleWorkspace';
 
 interface AppContextType {
   currentUser: UserProfile;
@@ -328,6 +328,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeRole, setActiveRole] = useState<UserRole>(() => currentUser.role);
 
   const login = (user?: UserProfile) => {
+    const targetUser = user || currentUser;
     if (user) {
       setCurrentUser(user);
       setActiveRole(user.role);
@@ -335,6 +336,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     setIsAuthenticated(true);
     localStorage.setItem('solar_authenticated', 'true');
+
+    // Automatically connect Google integrations (Gmail, Google Calendar, Google My Business)
+    // using the logged-in user's email credentials without requiring GCP or OAuth popups
+    try {
+      if (targetUser?.email) {
+        connectDirectWorkspaceAccount({
+          email: targetUser.email,
+          displayName: targetUser.name,
+          photoURL: targetUser.avatar
+        });
+      }
+    } catch (err) {
+      console.warn('Auto-connection for Google integrations note:', err);
+    }
   };
 
   const logout = () => {
@@ -745,24 +760,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('solar_user', JSON.stringify(currentUser));
   }, [currentUser]);
 
-  // Sync connected Google Workspace account into admin user profile if connected
+  // Auto-connect Google services (Gmail, Calendar, GMB) for the active user session without requiring GCP project / OAuth setup
   useEffect(() => {
     const wsUser = getConnectedWorkspaceUser();
-    if (wsUser?.isConnected && wsUser.email) {
-      if (currentUser.email !== wsUser.email) {
-        setCurrentUser(prev => ({
-          ...prev,
-          email: wsUser.email,
-          name: wsUser.displayName || prev.name
-        }));
-        setSystemUsers(prevUsers =>
-          prevUsers.map(u =>
-            u.id === currentUser.id
-              ? { ...u, email: wsUser.email, name: wsUser.displayName || u.name }
-              : u
-          )
-        );
+    if (!wsUser?.isConnected && currentUser?.email) {
+      try {
+        connectDirectWorkspaceAccount({
+          email: currentUser.email,
+          displayName: currentUser.name,
+          photoURL: currentUser.avatar
+        });
+      } catch (err) {
+        console.warn('Direct Google auto-connect note:', err);
       }
+    } else if (wsUser?.isConnected && wsUser.email && currentUser.email !== wsUser.email) {
+      setCurrentUser(prev => ({
+        ...prev,
+        email: wsUser.email,
+        name: wsUser.displayName || prev.name
+      }));
+      setSystemUsers(prevUsers =>
+        prevUsers.map(u =>
+          u.id === currentUser.id
+            ? { ...u, email: wsUser.email, name: wsUser.displayName || u.name }
+            : u
+        )
+      );
     }
   }, []);
 
