@@ -27,8 +27,8 @@ import {
 } from '../types';
 
 export const INITIAL_COMPANY_PROFILE: CompanyProfile = {
-  companyName: 'My Solar CRM',
-  legalName: 'My Solar CRM Australia Pty Ltd',
+  companyName: 'MySolarCRM',
+  legalName: 'MySolarCRM Australia Pty Ltd',
   abn: '52 619 840 231',
   acn: '619 840 231',
   logoUrl: '',

@@ -14,7 +14,9 @@ import {
   Sliders,
   Sparkles,
   Info,
-  Check
+  Check,
+  PlusCircle,
+  ArrowRight
 } from 'lucide-react';
 import {
   auth,
@@ -116,13 +118,16 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
         if (parsed.developerContactEmail?.toLowerCase() === 'akash.mohite@gmail.com') {
           parsed.developerContactEmail = 'admin@makemysolar.com.au';
         }
+        if (parsed.appName === 'Apex Solar CRM & Operations Hub' || parsed.appName === 'MakeMySolar CRM & Operations Hub') {
+          parsed.appName = 'MySolarCRM';
+        }
         return parsed;
       }
     } catch (e) {
       console.error(e);
     }
     return {
-      appName: 'MakeMySolar CRM & Operations Hub',
+      appName: 'MySolarCRM',
       userSupportEmail: appUser.email || 'admin@makemysolar.com.au',
       appLogoUrl: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?w=128&auto=format&fit=crop&q=80',
       appDomain: `https://${connectedDomain}`,
@@ -203,9 +208,19 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
       const isUnauth =
         e?.code === 'auth/unauthorized-domain' ||
         e?.message?.includes('unauthorized-domain');
+      const isAccessDenied =
+        e?.code === 'auth/access-denied' ||
+        e?.message?.includes('access_denied') ||
+        e?.message?.includes('developer-approved testers') ||
+        e?.message?.includes('verification process');
       if (isUnauth) {
         setDomainAuthError(
-          `Firebase Error: The domain '${window.location.hostname}' is not authorized in Firebase Console -> Authentication -> Settings -> Authorized domains.`
+          `Firebase Auth Domain Restriction: The domain '${window.location.hostname}' is not authorized in Firebase Console -> Authentication -> Settings -> Authorized domains.`
+        );
+        setShowDirectConnectForm(true);
+      } else if (isAccessDenied) {
+        setDomainAuthError(
+          `Google OAuth Error 403: access_denied. The Google Cloud Project OAuth Consent Screen is in "Testing" mode or missing your workspace account as an approved Test User, or the project needs to be created in your Google Cloud Console.`
         );
         setShowDirectConnectForm(true);
       } else {
@@ -422,14 +437,24 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
                       <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                       <div>
                         <h4 className="font-bold text-amber-200">
-                          {domainAuthError ? 'Firebase Auth Domain Restriction Detected' : 'Quick Connect Google Account'}
+                          {domainAuthError
+                            ? domainAuthError.includes('403') || domainAuthError.includes('access_denied')
+                              ? 'Google OAuth 403: access_denied / Project Setup Needed'
+                              : 'Firebase Auth Domain Restriction Detected'
+                            : 'Quick Connect Google Account'}
                         </h4>
                         <p className="text-amber-300/80 text-[11px] mt-0.5 leading-relaxed">
-                          Preview hostname{' '}
-                          <code className="px-1.5 py-0.5 bg-black/40 rounded text-amber-200 font-mono text-[10px]">
-                            {typeof window !== 'undefined' ? window.location.hostname : 'preview-host'}
-                          </code>{' '}
-                          must be added to Firebase Console Authorized Domains for popup authentication. You can connect directly below:
+                          {domainAuthError ? (
+                            <span>{domainAuthError}</span>
+                          ) : (
+                            <>
+                              Preview hostname{' '}
+                              <code className="px-1.5 py-0.5 bg-black/40 rounded text-amber-200 font-mono text-[10px]">
+                                {typeof window !== 'undefined' ? window.location.hostname : 'preview-host'}
+                              </code>{' '}
+                              must be added to Firebase Console Authorized Domains for popup authentication. You can connect directly below:
+                            </>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -453,6 +478,17 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Connect as {appUser.email || `admin@${connectedDomain}`}</span>
                       </button>
+                      <a
+                        href="https://console.cloud.google.com/projectcreate"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1.5"
+                        title="Create a new Google Cloud Console Project named MySolarCRM"
+                      >
+                        <PlusCircle className="w-3.5 h-3.5" />
+                        <span>Create Project in Google Cloud Console</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
                       <button
                         type="button"
                         onClick={() => setShowDirectConnectForm(!showDirectConnectForm)}
@@ -598,13 +634,24 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
                           </p>
                         </div>
                       </div>
-                      <div className="pt-1 flex items-center gap-2">
+                      <div className="pt-1 flex items-center gap-2 flex-wrap">
                         <button
                           onClick={handleSwitchAccount}
-                          className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold rounded-md shadow-xs transition-colors"
+                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold rounded-lg shadow-xs transition-colors"
                         >
                           Switch to @{connectedDomain} Account
                         </button>
+                        <a
+                          href="https://console.cloud.google.com/projectcreate"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+                          title="Create GCP Project for admin@makemysolar.com.au"
+                        >
+                          <PlusCircle className="w-3.5 h-3.5" />
+                          <span>Create Project in GCP</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
                         <button
                           onClick={() => setActiveTab('domain')}
                           className="text-xs text-amber-400 underline hover:text-amber-200"
@@ -879,15 +926,28 @@ export const GoogleWorkspaceSettingsModal: React.FC<Props> = ({
                     <ShieldCheck className="w-5 h-5 text-blue-400" />
                     <span>Google Cloud Console OAuth Consent Screen Finder</span>
                   </div>
-                  <a
-                    href="https://console.cloud.google.com/apis/credentials/consent"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-colors"
-                  >
-                    <span>Open GCP OAuth Consent Screen</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <a
+                      href="https://console.cloud.google.com/projectcreate"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+                      title="Create a new Google Cloud Project named MySolarCRM"
+                    >
+                      <PlusCircle className="w-3.5 h-3.5" />
+                      <span>Create Project in GCP</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                    <a
+                      href="https://console.cloud.google.com/apis/credentials/consent"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+                    >
+                      <span>Open GCP OAuth Consent Screen</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
                 </div>
                 <p className="text-gray-300 leading-relaxed text-[11px]">
                   The <strong>OAuth Consent Screen</strong> is configured in the <strong>Google Cloud Platform (GCP) Console</strong>. It determines what information your users see when authenticating with Google Workspace to dispatch client solar proposals via Gmail and sync appointments in Google Calendar.

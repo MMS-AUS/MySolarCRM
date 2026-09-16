@@ -20,7 +20,8 @@ import {
   X,
   FileText,
   UserCheck,
-  Sparkles
+  Sparkles,
+  PlusCircle
 } from 'lucide-react';
 import {
   getPersonalEmailConfig,
@@ -426,7 +427,7 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                     </div>
                   </div>
 
-                  <div className="pt-2 flex items-center gap-2">
+                  <div className="pt-2 flex items-center gap-2 flex-wrap">
                     <button
                       type="button"
                       onClick={() => {
@@ -440,6 +441,17 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>Verify &amp; Link Workspace Mailbox</span>
                     </button>
+                    <a
+                      href="https://console.cloud.google.com/projectcreate"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
+                      title="Create Project in Google Cloud Console"
+                    >
+                      <PlusCircle className="w-3.5 h-3.5" />
+                      <span>Create Project in GCP</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                     <button
                       type="button"
                       disabled={isSwitchingAccount}
