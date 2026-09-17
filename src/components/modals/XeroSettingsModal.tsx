@@ -32,9 +32,12 @@ import {
 import {
   getXeroSettings,
   saveXeroSettings,
-  disconnectXeroAccount,
-  connectActualXeroAccount,
-  resetToDemoXero,
+  fetchXeroStatusFromBackend,
+  fetchXeroSetupInfo,
+  initiateXeroOAuthLogin,
+  disconnectXeroLive,
+  refreshXeroTokenLive,
+  fetchLiveXeroInvoices,
   clearXeroSampleData,
   getXeroInvoices,
   saveXeroInvoices,
@@ -56,7 +59,9 @@ import {
   syncAllContactsWithXero,
   syncSingleContactWithXero,
   pingXeroApi,
-  XeroPingResult
+  XeroPingResult,
+  XeroLiveStatusResponse,
+  XeroSetupInfo
 } from '../../services/xeroService';
 import {
   XeroIntegrationSettings,
@@ -90,6 +95,14 @@ export const XeroSettingsModal: React.FC<XeroSettingsModalProps> = ({
   const [quotes, setQuotes] = useState<XeroQuotation[]>(getXeroQuotations);
   const [bills, setBills] = useState<XeroBill[]>(getXeroBills);
   const [syncedContacts, setSyncedContacts] = useState<XeroContactSyncItem[]>(getXeroContactSyncItems);
+
+  // Live OAuth & Backend Diagnostic States
+  const [backendStatus, setBackendStatus] = useState<XeroLiveStatusResponse | null>(null);
+  const [setupInfo, setSetupInfo] = useState<XeroSetupInfo | null>(null);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(false);
+  const [isRefreshingToken, setIsRefreshingToken] = useState(false);
+  const [isSyncingLiveInvoices, setIsSyncingLiveInvoices] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Search & filter states
   const [invoiceSearch, setInvoiceSearch] = useState('');
@@ -128,15 +141,22 @@ export const XeroSettingsModal: React.FC<XeroSettingsModalProps> = ({
   const [isPinging, setIsPinging] = useState(false);
   const [pingResult, setPingResult] = useState<XeroPingResult | null>(null);
 
-  // Connect Actual Account Modal State
-  const [showConnectModal, setShowConnectModal] = useState(false);
-  const [actualOrgName, setActualOrgName] = useState('');
-  const [actualEmail, setActualEmail] = useState('');
-  const [actualTenantId, setActualTenantId] = useState('');
-  const [actualClientId, setActualClientId] = useState('');
-  const [actualClientSecret, setActualClientSecret] = useState('');
-  const [clearSampleOnConnect, setClearSampleOnConnect] = useState(false);
-  const [isSubmittingConnect, setIsSubmittingConnect] = useState(false);
+  const loadLiveStatus = async () => {
+    setIsLoadingStatus(true);
+    try {
+      const [status, info] = await Promise.all([
+        fetchXeroStatusFromBackend(),
+        fetchXeroSetupInfo()
+      ]);
+      setBackendStatus(status);
+      setSetupInfo(info);
+      setSettings(getXeroSettings());
+    } catch (e) {
+      console.error('[Xero Modal] Error loading status:', e);
+    } finally {
+      setIsLoadingStatus(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -146,6 +166,28 @@ export const XeroSettingsModal: React.FC<XeroSettingsModalProps> = ({
       setBills(getXeroBills());
       setSyncedContacts(getXeroContactSyncItems());
       setActiveTab(initialTab);
+      loadLiveStatus();
+
+      // Check URL parameters for OAuth redirect notifications
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const xeroParam = urlParams.get('xero');
+        const tenantParam = urlParams.get('tenant');
+        const errorParam = urlParams.get('xero_error');
+
+        if (xeroParam === 'connected') {
+          showNotification(`Successfully connected to Xero! Active Tenant: ${tenantParam || 'Connected Org'}. Tokens stored in Supabase.`);
+          setActiveTab('config');
+          // Clear query params cleanly
+          const newUrl = window.location.pathname + window.location.hash;
+          window.history.replaceState({}, '', newUrl);
+        } else if (errorParam) {
+          showNotification(`Xero OAuth Error: ${decodeURIComponent(errorParam)}`);
+          setActiveTab('config');
+          const newUrl = window.location.pathname + window.location.hash;
+          window.history.replaceState({}, '', newUrl);
+        }
+      }
     }
   }, [isOpen, initialTab]);
 
@@ -153,55 +195,105 @@ export const XeroSettingsModal: React.FC<XeroSettingsModalProps> = ({
 
   const showNotification = (msg: string) => {
     setActionNotice(msg);
-    setTimeout(() => setActionNotice(null), 5000);
+    setTimeout(() => setActionNotice(null), 7000);
   };
 
-  const handleDisconnectAccount = () => {
-    if (confirm('Disconnect from current Xero organization? You will be able to connect your actual business Xero account.')) {
-      const updated = disconnectXeroAccount();
-      setSettings(updated);
-      showNotification('Disconnected from Xero organization.');
-    }
+  const copyToClipboard = (text: string, keyName: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(keyName);
+    setTimeout(() => setCopiedKey(null), 2500);
   };
 
-  const handleConnectActualAccount = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!actualOrgName.trim() || !actualEmail.trim()) {
-      alert('Please provide your actual Xero Organization Name and Accounting Email.');
-      return;
-    }
-    setIsSubmittingConnect(true);
-    setTimeout(() => {
-      const updated = connectActualXeroAccount({
-        organizationName: actualOrgName.trim(),
-        connectedEmail: actualEmail.trim(),
-        tenantId: actualTenantId.trim() || undefined,
-        clientId: actualClientId.trim() || undefined,
-        clientSecret: actualClientSecret.trim() || undefined,
-        clearSampleData: clearSampleOnConnect
-      });
-      setSettings(updated);
-      if (clearSampleOnConnect) {
-        setInvoices([]);
-        setQuotes([]);
-        setBills([]);
-        setSyncedContacts([]);
+  /**
+   * 4.A & 5: Primary Action - Direct OAuth 2.0 Login to Xero
+   */
+  const handleConnectToXero = () => {
+    initiateXeroOAuthLogin();
+  };
+
+  /**
+   * 4.C & 5: Disconnect Action - Revokes Xero tokens & deletes record from Supabase
+   */
+  const handleDisconnectXero = async () => {
+    if (confirm('Are you sure you want to disconnect from Xero? This will revoke the OAuth token and delete the credentials record from your Supabase database.')) {
+      try {
+        const res = await disconnectXeroLive();
+        setSettings(getXeroSettings());
+        await loadLiveStatus();
+        showNotification(res.message || 'Xero integration disconnected and credentials removed from Supabase.');
+      } catch (err: any) {
+        showNotification(`Error disconnecting: ${err.message}`);
       }
-      setIsSubmittingConnect(false);
-      setShowConnectModal(false);
-      showNotification(`Successfully connected actual Xero organization: "${updated.organizationName}" (${updated.connectedEmail})`);
-    }, 400);
+    }
   };
 
-  const handleResetToDemo = () => {
-    if (confirm('Reset integration back to sample demo organization (SolarFlow Dynamics Australia Pty Ltd)?')) {
-      const reset = resetToDemoXero();
-      setSettings(reset);
-      setInvoices(getXeroInvoices());
-      setQuotes(getXeroQuotations());
-      setBills(getXeroBills());
-      setSyncedContacts(getXeroContactSyncItems());
-      showNotification('Reset to sample demo Xero account.');
+  /**
+   * 4.B: Manual Token Refresh test
+   */
+  const handleRefreshToken = async () => {
+    setIsRefreshingToken(true);
+    try {
+      const res = await refreshXeroTokenLive();
+      if (res.success) {
+        showNotification(`Xero token pair refreshed! New expiry: ${res.expiresAt ? new Date(res.expiresAt).toLocaleTimeString() : 'Active'}`);
+        await loadLiveStatus();
+      } else {
+        showNotification(`Failed to refresh token: ${res.error}`);
+      }
+    } finally {
+      setIsRefreshingToken(false);
+    }
+  };
+
+  /**
+   * Pull live invoices directly from Xero Cloud Accounting API
+   */
+  const handleSyncLiveInvoices = async () => {
+    setIsSyncingLiveInvoices(true);
+    try {
+      const live = await fetchLiveXeroInvoices();
+      if (live && live.length > 0) {
+        // Map to local XeroInvoice model
+        const mapped: XeroInvoice[] = live.map((inv: any) => ({
+          id: inv.InvoiceID || `xinv-${Date.now()}`,
+          type: 'ACCREC' as const,
+          invoiceNumber: inv.InvoiceNumber || 'INV-LIVE',
+          contactId: inv.Contact?.ContactID || '',
+          contactName: inv.Contact?.Name || 'Xero Client',
+          contactEmail: inv.Contact?.EmailAddress,
+          date: inv.DateString || new Date().toISOString().split('T')[0],
+          dueDate: inv.DueDateString || new Date().toISOString().split('T')[0],
+          status: (inv.Status || 'AUTHORISED') as XeroInvoiceStatus,
+          reference: inv.Reference || '',
+          currencyCode: inv.CurrencyCode || 'AUD',
+          lineItems: (inv.LineItems || []).map((li: any, idx: number) => ({
+            id: li.LineItemID || `li-${idx}`,
+            description: li.Description || 'Solar Component',
+            quantity: li.Quantity || 1,
+            unitAmount: li.UnitAmount || 0,
+            accountCode: li.AccountCode || '200',
+            taxType: li.TaxType || 'OUTPUT2',
+            taxAmount: li.TaxAmount || 0,
+            lineAmount: li.LineAmount || 0
+          })),
+          subTotal: inv.SubTotal || 0,
+          totalTax: inv.TotalTax || 0,
+          total: inv.Total || 0,
+          amountPaid: inv.AmountPaid || 0,
+          amountDue: inv.AmountDue || 0,
+          updatedAt: inv.UpdatedDateUTC || new Date().toISOString()
+        }));
+
+        saveXeroInvoices(mapped);
+        setInvoices(mapped);
+        showNotification(`Fetched ${mapped.length} live invoices directly from Xero Cloud!`);
+      } else {
+        showNotification('Connected to Xero, but no invoices were found in this Xero tenant.');
+      }
+    } catch (err: any) {
+      showNotification(`Failed to fetch live invoices: ${err.message}`);
+    } finally {
+      setIsSyncingLiveInvoices(false);
     }
   };
 
@@ -249,14 +341,17 @@ export const XeroSettingsModal: React.FC<XeroSettingsModalProps> = ({
   // -------------------------------------------------------------
   // TWO-WAY CONTACT SYNC HANDLER
   // -------------------------------------------------------------
-  const handleSyncAllContacts = () => {
+  const handleSyncAllContacts = async () => {
     setIsSyncingContacts(true);
-    setTimeout(() => {
-      const res = syncAllContactsWithXero(contacts, subContractors);
+    try {
+      const res = await syncAllContactsWithXero(contacts, subContractors);
       setSyncedContacts(getXeroContactSyncItems());
-      setIsSyncingContacts(false);
       showNotification(res.message);
-    }, 1000);
+    } catch (err: any) {
+      showNotification(`Contact sync error: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsSyncingContacts(false);
+    }
   };
 
   const handleSyncSingleContact = (item: XeroContactSyncItem) => {
@@ -358,28 +453,27 @@ export const XeroSettingsModal: React.FC<XeroSettingsModalProps> = ({
                 <h3 className="font-bold text-base sm:text-lg text-white">
                   Xero Cloud Accounting &amp; Financial Operations
                 </h3>
-                {settings.isConnected ? (
-                  <span
-                    className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold font-mono flex items-center gap-1 ${
-                      settings.isDemoAccount
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-3 h-3" />
-                    {settings.isDemoAccount ? 'Sample Demo Account' : 'Connected to Actual Account'}
+                {(backendStatus?.connected || settings.isConnected) ? (
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold font-mono flex items-center gap-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    Connected
                   </span>
                 ) : (
                   <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 font-bold font-mono flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" />
-                    Disconnected
+                    <AlertTriangle className="w-3 h-3 text-red-400" />
+                    Not Connected
+                  </span>
+                )}
+                {backendStatus?.tokenStorage === 'supabase' && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 font-mono">
+                    Supabase Synced
                   </span>
                 )}
               </div>
               <p className="text-xs text-gray-400 mt-0.5">
-                {settings.isConnected
-                  ? `Organization: ${settings.organizationName} • ${settings.connectedEmail}`
-                  : 'No Xero account connected. Click below to connect your actual business account.'}
+                {(backendStatus?.connected || settings.isConnected)
+                  ? `Active Tenant: ${backendStatus?.tenantName || settings.organizationName || 'Live Organisation'} • Tenant ID: ${backendStatus?.tenantId || settings.tenantId || 'Active'}`
+                  : 'No Xero account connected. Click "Connect to Xero" to initiate OAuth 2.0 authorization.'}
               </p>
             </div>
           </div>
@@ -392,53 +486,67 @@ export const XeroSettingsModal: React.FC<XeroSettingsModalProps> = ({
         </div>
 
         {/* Account Status & Connection Switcher Banner */}
-        {(!settings.isConnected || settings.isDemoAccount) && (
-          <div
-            className={`px-4 py-2.5 border-b text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
-              !settings.isConnected
-                ? 'bg-red-500/10 border-red-500/20 text-red-200'
-                : 'bg-sky-500/10 border-sky-500/20 text-sky-200'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Building className="w-4 h-4 shrink-0 text-sky-400" />
-              <span>
-                {!settings.isConnected ? (
-                  <strong>No Xero Organization Connected.</strong>
-                ) : (
-                  <>
-                    Currently linked to sample company:{' '}
-                    <strong>{settings.organizationName}</strong> ({settings.connectedEmail}).
-                  </>
-                )}{' '}
-                Connect your actual business account to synchronize real financial data.
-              </span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setActualOrgName(settings.organizationName !== 'SolarFlow Dynamics Australia Pty Ltd' ? settings.organizationName : '');
-                  setActualEmail(settings.connectedEmail !== 'accounts@solarinstallers.com.au' ? settings.connectedEmail : '');
-                  setShowConnectModal(true);
-                }}
-                className="px-3 py-1 bg-sky-500 hover:bg-sky-400 text-black font-extrabold text-xs rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
-              >
-                <Link2 className="w-3.5 h-3.5" />
-                <span>Connect Actual Account</span>
-              </button>
-              {settings.isConnected && (
+        <div
+          className={`px-4 py-2.5 border-b text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
+            (backendStatus?.connected || settings.isConnected)
+              ? 'bg-emerald-950/20 border-emerald-500/20 text-emerald-200'
+              : 'bg-sky-950/20 border-sky-500/20 text-sky-200'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Building className="w-4 h-4 shrink-0 text-sky-400" />
+            <span>
+              {(backendStatus?.connected || settings.isConnected) ? (
+                <>
+                  Connected to: <strong>{backendStatus?.tenantName || settings.organizationName || 'Xero Production Account'}</strong>
+                  {backendStatus?.expiresAt && (
+                    <span className="text-gray-400 ml-2">
+                      (Token expires: {new Date(backendStatus.expiresAt).toLocaleTimeString()})
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <strong>OAuth 2.0 Ready:</strong> Click &quot;Connect to Xero&quot; to authorize your live business organization with offline sync.
+                </>
+              )}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {(backendStatus?.connected || settings.isConnected) ? (
+              <>
                 <button
                   type="button"
-                  onClick={handleDisconnectAccount}
-                  className="px-2.5 py-1 bg-[#222] hover:bg-[#2c2c2c] text-gray-300 hover:text-white border border-[#383838] text-xs font-semibold rounded-lg transition-colors"
+                  onClick={handleRefreshToken}
+                  disabled={isRefreshingToken}
+                  className="px-2.5 py-1 bg-[#222] hover:bg-[#2c2c2c] text-sky-300 hover:text-sky-200 border border-sky-500/30 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                  title="Refresh OAuth token pair"
                 >
-                  Disconnect
+                  <RefreshCw className={`w-3 h-3 ${isRefreshingToken ? 'animate-spin' : ''}`} />
+                  <span>Refresh Token</span>
                 </button>
-              )}
-            </div>
+                <button
+                  type="button"
+                  onClick={handleDisconnectXero}
+                  className="px-2.5 py-1 bg-[#222] hover:bg-[#2c2c2c] text-red-400 hover:text-red-300 border border-red-500/30 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                  title="Disconnect and remove credentials from Supabase"
+                >
+                  <Unlink className="w-3 h-3" />
+                  <span>Disconnect</span>
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConnectToXero}
+                className="px-3.5 py-1.5 bg-sky-500 hover:bg-sky-400 text-black font-extrabold text-xs rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                <span>Connect to Xero</span>
+              </button>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Tab Navigation */}
         <div className="flex items-center border-b border-[#262626] bg-[#141414] px-4 overflow-x-auto">
@@ -584,13 +692,26 @@ export const XeroSettingsModal: React.FC<XeroSettingsModalProps> = ({
                   </select>
                 </div>
 
-                <button
-                  onClick={handleOpenCreateInvoice}
-                  className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-black font-extrabold text-xs rounded-lg shadow-sm flex items-center gap-1.5 transition-colors self-start sm:self-auto"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Create Invoice in Xero</span>
-                </button>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={handleSyncLiveInvoices}
+                    disabled={isSyncingLiveInvoices}
+                    className="px-3.5 py-2 bg-[#242424] hover:bg-[#2e2e2e] text-sky-400 hover:text-sky-300 border border-sky-500/30 font-bold text-xs rounded-lg shadow-sm flex items-center gap-1.5 transition-colors"
+                    title="Fetch live authorized invoices from connected Xero tenant"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isSyncingLiveInvoices ? 'animate-spin' : ''}`} />
+                    <span>{isSyncingLiveInvoices ? 'Syncing Xero...' : 'Fetch from Xero Cloud'}</span>
+                  </button>
+
+                  <button
+                    onClick={handleOpenCreateInvoice}
+                    className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-black font-extrabold text-xs rounded-lg shadow-sm flex items-center gap-1.5 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Create Invoice in Xero</span>
+                  </button>
+                </div>
               </div>
 
               {/* Invoices Table */}
@@ -1165,112 +1286,271 @@ export const XeroSettingsModal: React.FC<XeroSettingsModalProps> = ({
           {/* ========================================================= */}
           {activeTab === 'config' && (
             <form onSubmit={handleSaveConfig} className="space-y-4">
-              {/* Organization & OAuth Status */}
-              <div className="p-4 rounded-xl bg-[#161616] border border-[#262626] space-y-3">
+              {/* Live OAuth 2.0 & Supabase Status Panel */}
+              <div className="p-4 rounded-xl bg-[#161616] border border-[#262626] space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
                     <Building className="w-4 h-4 text-sky-400" />
                     <h4 className="font-bold text-xs uppercase tracking-wider text-white">
-                      Xero Organization &amp; Account Connection
+                      Xero Live Production Connection (OAuth 2.0 &amp; Supabase)
                     </h4>
-                    {settings.isConnected ? (
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
-                          settings.isDemoAccount
-                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                            : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                        }`}
-                      >
-                        <CheckCircle2 className="w-3 h-3" />
-                        {settings.isDemoAccount ? 'Sample Demo Account' : 'Live Production Account'}
+                    {(backendStatus?.connected || settings.isConnected) ? (
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-mono">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                        Connected
                       </span>
                     ) : (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3" />
-                        Disconnected
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 flex items-center gap-1 font-mono">
+                        <AlertTriangle className="w-3 h-3 text-red-400" />
+                        Not Connected
+                      </span>
+                    )}
+                    {backendStatus?.tokenStorage === 'supabase' && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 font-mono">
+                        Stored in Supabase
                       </span>
                     )}
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActualOrgName(settings.organizationName !== 'SolarFlow Dynamics Australia Pty Ltd' ? settings.organizationName : '');
-                        setActualEmail(settings.connectedEmail !== 'accounts@solarinstallers.com.au' ? settings.connectedEmail : '');
-                        setShowConnectModal(true);
-                      }}
-                      className="px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-black font-extrabold text-xs rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
-                    >
-                      <Link2 className="w-3.5 h-3.5" />
-                      <span>Connect Actual Account</span>
-                    </button>
-                    {settings.isConnected && (
+                    {(backendStatus?.connected || settings.isConnected) ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleRefreshToken}
+                          disabled={isRefreshingToken}
+                          className="px-3 py-1.5 bg-[#222] hover:bg-[#2c2c2c] text-sky-300 hover:text-sky-200 border border-sky-500/30 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
+                          title="Refresh OAuth token pair via /api/xero/refresh"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingToken ? 'animate-spin' : ''}`} />
+                          <span>Refresh Token</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDisconnectXero}
+                          className="px-3 py-1.5 bg-[#222] hover:bg-[#2c2c2c] text-red-400 hover:text-red-300 border border-red-500/30 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
+                          title="Revoke access and remove from Supabase"
+                        >
+                          <Unlink className="w-3.5 h-3.5" />
+                          <span>Disconnect</span>
+                        </button>
+                      </>
+                    ) : (
                       <button
                         type="button"
-                        onClick={handleDisconnectAccount}
-                        className="px-2.5 py-1.5 bg-[#222] hover:bg-[#2c2c2c] text-red-400 hover:text-red-300 border border-[#383838] text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
-                        title="Disconnect current Xero organization"
+                        onClick={handleConnectToXero}
+                        className="px-4 py-1.5 bg-sky-500 hover:bg-sky-400 text-black font-extrabold text-xs rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
                       >
-                        <Unlink className="w-3.5 h-3.5" />
-                        <span>Disconnect</span>
+                        <Link2 className="w-3.5 h-3.5" />
+                        <span>Connect to Xero</span>
                       </button>
                     )}
+
                     <button
                       type="button"
-                      onClick={handleResetToDemo}
-                      className="px-2.5 py-1.5 bg-[#222] hover:bg-[#2c2c2c] text-gray-400 hover:text-gray-200 border border-[#383838] text-xs font-medium rounded-lg transition-colors"
-                      title="Reset to sample demo data"
+                      onClick={loadLiveStatus}
+                      disabled={isLoadingStatus}
+                      className="px-2.5 py-1.5 bg-[#222] hover:bg-[#2c2c2c] text-gray-300 hover:text-white border border-[#383838] text-xs font-medium rounded-lg transition-colors"
+                      title="Check current connection status"
                     >
-                      Reset to Demo
+                      <RefreshCw className={`w-3.5 h-3.5 ${isLoadingStatus ? 'animate-spin' : ''}`} />
                     </button>
                   </div>
                 </div>
 
-                <p className="text-xs text-gray-400">
-                  Manage the Xero organization connected to SolarFlow. You can disconnect this instance anytime and link your actual company books.
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-300 mb-1">
-                      Xero Organization Name
-                    </label>
-                    <input
-                      type="text"
-                      value={settings.organizationName}
-                      onChange={e => setSettings({ ...settings, organizationName: e.target.value })}
-                      placeholder="e.g. Your Solar Business Pty Ltd"
-                      className="w-full text-xs bg-[#121212] border border-[#2d2d2d] rounded-lg px-3 py-2 text-white font-bold focus:border-sky-400 outline-none"
-                      required
-                    />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
+                  <div className="p-3 bg-[#121212] rounded-lg border border-[#262626]">
+                    <span className="text-gray-400 block text-[11px]">Connected Xero Organization</span>
+                    <strong className="text-white font-bold text-sm block truncate mt-0.5">
+                      {backendStatus?.tenantName || settings.organizationName || 'No Organization Connected'}
+                    </strong>
+                    <span className="text-[11px] text-gray-500">Live production tenant</span>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-300 mb-1">
-                      Connected Accounting Mailbox
-                    </label>
-                    <input
-                      type="email"
-                      value={settings.connectedEmail}
-                      onChange={e => setSettings({ ...settings, connectedEmail: e.target.value })}
-                      placeholder="e.g. accounts@yourcompany.com.au"
-                      className="w-full text-xs font-mono bg-[#121212] border border-[#2d2d2d] rounded-lg px-3 py-2 text-gray-300 focus:border-sky-400 outline-none"
-                      required
-                    />
+                  <div className="p-3 bg-[#121212] rounded-lg border border-[#262626]">
+                    <span className="text-gray-400 block text-[11px]">Xero Tenant ID</span>
+                    <code className="text-sky-300 font-mono text-[11px] block truncate mt-0.5">
+                      {backendStatus?.tenantId || settings.tenantId || 'Not authorized'}
+                    </code>
+                    <span className="text-[11px] text-gray-500">Auto-resolved on OAuth exchange</span>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-300 mb-1">
-                      Xero Tenant ID / Organization GUID
+                  <div className="p-3 bg-[#121212] rounded-lg border border-[#262626]">
+                    <span className="text-gray-400 block text-[11px]">Token Storage Target</span>
+                    <strong className="text-emerald-400 font-bold block mt-0.5">
+                      Supabase Table: xero_credentials
+                    </strong>
+                    <span className="text-[11px] text-gray-400">
+                      {backendStatus?.expiresAt
+                        ? `Expires: ${new Date(backendStatus.expiresAt).toLocaleTimeString()}`
+                        : 'Secure encrypted tokens'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Setup & Environment Checklist */}
+                <div className="p-3.5 bg-[#121212] border border-[#262626] rounded-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
+                      <Key className="w-3.5 h-3.5 text-sky-400" />
+                      <span>OAuth 2.0 &amp; Supabase Environment Configuration</span>
+                    </span>
+                    <span className="text-[11px] text-gray-400">
+                      Configured in <code>.env.local</code> / server environment
+                    </span>
+                  </div>
+
+                  {/* Status Pills */}
+                  {setupInfo?.envChecklist && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px]">
+                      <div className="p-2 bg-[#181818] border border-[#2c2c2c] rounded-lg flex items-center justify-between">
+                        <span className="text-gray-300 font-mono">XERO_CLIENT_ID</span>
+                        {setupInfo.envChecklist.xeroClientId ? (
+                          <span className="text-emerald-400 font-bold flex items-center gap-0.5">
+                            <Check className="w-3 h-3" /> Set
+                          </span>
+                        ) : (
+                          <span className="text-amber-400 font-bold">Missing</span>
+                        )}
+                      </div>
+
+                      <div className="p-2 bg-[#181818] border border-[#2c2c2c] rounded-lg flex items-center justify-between">
+                        <span className="text-gray-300 font-mono">XERO_CLIENT_SECRET</span>
+                        {setupInfo.envChecklist.xeroClientSecret ? (
+                          <span className="text-emerald-400 font-bold flex items-center gap-0.5">
+                            <Check className="w-3 h-3" /> Set
+                          </span>
+                        ) : (
+                          <span className="text-amber-400 font-bold">Missing</span>
+                        )}
+                      </div>
+
+                      <div className="p-2 bg-[#181818] border border-[#2c2c2c] rounded-lg flex items-center justify-between">
+                        <span className="text-gray-300 font-mono">SUPABASE_URL</span>
+                        {setupInfo.envChecklist.supabaseUrl ? (
+                          <span className="text-emerald-400 font-bold flex items-center gap-0.5">
+                            <Check className="w-3 h-3" /> Set
+                          </span>
+                        ) : (
+                          <span className="text-amber-400 font-bold">Missing</span>
+                        )}
+                      </div>
+
+                      <div className="p-2 bg-[#181818] border border-[#2c2c2c] rounded-lg flex items-center justify-between">
+                        <span className="text-gray-300 font-mono">SERVICE_ROLE_KEY</span>
+                        {setupInfo.envChecklist.supabaseServiceRoleKey ? (
+                          <span className="text-emerald-400 font-bold flex items-center gap-0.5">
+                            <Check className="w-3 h-3" /> Set
+                          </span>
+                        ) : (
+                          <span className="text-amber-400 font-bold">Missing</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Authorized Redirect URI Box */}
+                  <div className="pt-2 border-t border-[#222]">
+                    <label className="block text-[11px] font-bold text-gray-300 mb-1">
+                      Authorized Redirect URI (Paste into Xero Developer Portal &rarr; App &rarr; Configuration):
                     </label>
-                    <input
-                      type="text"
-                      value={settings.tenantId}
-                      onChange={e => setSettings({ ...settings, tenantId: e.target.value })}
-                      placeholder="e.g. xero-tnt-..."
-                      className="w-full text-xs font-mono bg-[#121212] border border-[#2d2d2d] rounded-lg px-3 py-2 text-gray-400 focus:border-sky-400 outline-none"
-                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={
+                          setupInfo?.authorizedRedirectUri ||
+                          (typeof window !== 'undefined'
+                            ? `${window.location.origin}/api/auth/xero/callback`
+                            : 'http://localhost:3000/api/auth/xero/callback')
+                        }
+                        className="flex-1 text-xs font-mono bg-[#0d0d0d] border border-[#333] rounded-lg px-3 py-2 text-sky-300 outline-none select-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          copyToClipboard(
+                            setupInfo?.authorizedRedirectUri ||
+                              (typeof window !== 'undefined'
+                                ? `${window.location.origin}/api/auth/xero/callback`
+                                : 'http://localhost:3000/api/auth/xero/callback'),
+                            'redirectUri'
+                          )
+                        }
+                        className="px-3 py-2 bg-[#222] hover:bg-[#2c2c2c] text-white border border-[#383838] text-xs font-bold rounded-lg transition-colors shrink-0"
+                      >
+                        {copiedKey === 'redirectUri' ? 'Copied!' : 'Copy URI'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Scopes Badges */}
+                  <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[11px]">
+                    <span className="text-gray-400 mr-1">Authorized Scopes:</span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#1e1e1e] border border-[#333] font-mono text-gray-300">
+                      offline_access
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#1e1e1e] border border-[#333] font-mono text-gray-300">
+                      accounting.transactions
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#1e1e1e] border border-[#333] font-mono text-gray-300">
+                      accounting.contacts
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#1e1e1e] border border-[#333] font-mono text-gray-300">
+                      accounting.settings
+                    </span>
+                  </div>
+
+                  {/* Supabase Migration Script Drawer */}
+                  <div className="pt-2 border-t border-[#222]">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-bold text-gray-300">
+                        Supabase Migration Script (<code>xero_credentials</code> table schema with RLS):
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          copyToClipboard(
+                            `CREATE TABLE IF NOT EXISTS public.xero_credentials (
+  id TEXT PRIMARY KEY DEFAULT 'xero_production',
+  tenant_id TEXT NOT NULL,
+  tenant_name TEXT,
+  access_token TEXT NOT NULL,
+  refresh_token TEXT NOT NULL,
+  id_token TEXT,
+  token_type TEXT DEFAULT 'Bearer',
+  scope TEXT,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.xero_credentials ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow server-side access only"
+  ON public.xero_credentials
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);`,
+                            'sqlMigration'
+                          )
+                        }
+                        className="text-[11px] text-sky-400 hover:text-sky-300 underline font-semibold"
+                      >
+                        {copiedKey === 'sqlMigration' ? 'Copied SQL!' : 'Copy SQL Migration'}
+                      </button>
+                    </div>
+                    <pre className="p-2.5 bg-[#0a0a0a] rounded-lg border border-[#262626] text-[10px] font-mono text-gray-400 overflow-x-auto max-h-24">
+{`CREATE TABLE IF NOT EXISTS public.xero_credentials (
+  id TEXT PRIMARY KEY DEFAULT 'xero_production',
+  tenant_id TEXT NOT NULL,
+  tenant_name TEXT,
+  access_token TEXT NOT NULL,
+  refresh_token TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL
+);`}
+                    </pre>
                   </div>
                 </div>
               </div>
@@ -1441,145 +1721,7 @@ export const XeroSettingsModal: React.FC<XeroSettingsModalProps> = ({
         </div>
       </div>
 
-      {/* ============================================================= */}
-      {/* SUB-MODAL: CONNECT ACTUAL XERO ACCOUNT DIALOG                 */}
-      {/* ============================================================= */}
-      {showConnectModal && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-xs p-3">
-          <div className="w-full max-w-lg bg-[#181818] border border-[#2d2d2d] rounded-2xl shadow-2xl p-6 text-white animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-4 border-b border-[#262626]">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                  <Link2 className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-base text-white">Connect Your Actual Xero Account</h3>
-                  <p className="text-xs text-gray-400">
-                    Link your live business organization and accounting mailbox
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowConnectModal(false)}
-                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-[#262626]"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            <form onSubmit={handleConnectActualAccount} className="space-y-4 pt-4">
-              <div className="p-3 bg-sky-500/10 border border-sky-500/20 rounded-xl text-xs text-sky-300">
-                <p className="font-semibold mb-1 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Connect Actual Organization</span>
-                </p>
-                <p className="text-gray-300">
-                  Enter your company’s Xero credentials below. This replaces the default demo account (SolarFlow Dynamics) with your real business entity.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-200 mb-1.5">
-                  Xero Organization / Company Legal Name <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={actualOrgName}
-                  onChange={e => setActualOrgName(e.target.value)}
-                  placeholder="e.g. Apex Solar Energy Australia Pty Ltd"
-                  className="w-full text-xs bg-[#121212] border border-[#333] rounded-xl px-3.5 py-2.5 text-white font-medium focus:border-sky-400 outline-none"
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-200 mb-1.5">
-                  Primary Accounting / Finance Email <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="email"
-                  value={actualEmail}
-                  onChange={e => setActualEmail(e.target.value)}
-                  placeholder="e.g. accounts@apexsolarenergy.com.au"
-                  className="w-full text-xs font-mono bg-[#121212] border border-[#333] rounded-xl px-3.5 py-2.5 text-white focus:border-sky-400 outline-none"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1">
-                    Xero Tenant ID <span className="text-gray-500 font-normal">(Optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={actualTenantId}
-                    onChange={e => setActualTenantId(e.target.value)}
-                    placeholder="Auto-generated if blank"
-                    className="w-full text-xs font-mono bg-[#121212] border border-[#333] rounded-xl px-3 py-2 text-gray-300 focus:border-sky-400 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1">
-                    OAuth App Client ID <span className="text-gray-500 font-normal">(Optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={actualClientId}
-                    onChange={e => setActualClientId(e.target.value)}
-                    placeholder="Custom App ID"
-                    className="w-full text-xs font-mono bg-[#121212] border border-[#333] rounded-xl px-3 py-2 text-gray-300 focus:border-sky-400 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-[#262626]">
-                <label className="flex items-start gap-2.5 p-3 rounded-xl bg-[#121212] border border-[#2a2a2a] cursor-pointer hover:border-[#383838]">
-                  <input
-                    type="checkbox"
-                    checked={clearSampleOnConnect}
-                    onChange={e => setClearSampleOnConnect(e.target.checked)}
-                    className="accent-sky-400 mt-0.5 rounded"
-                  />
-                  <div className="text-xs">
-                    <span className="font-bold text-gray-200 block">
-                      Clear sample demo transactions on connect
-                    </span>
-                    <span className="text-gray-400 text-[11px]">
-                      Removes placeholder invoices, quotes &amp; bills so your accounting ledger starts clean.
-                    </span>
-                  </div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-[#262626]">
-                <button
-                  type="button"
-                  onClick={() => setShowConnectModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-[#262626] transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingConnect}
-                  className="px-5 py-2.5 bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-black font-extrabold text-xs rounded-xl shadow-md transition-colors flex items-center gap-2"
-                >
-                  {isSubmittingConnect ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="w-4 h-4" />
-                  )}
-                  <span>{isSubmittingConnect ? 'Connecting...' : 'Authorize & Connect Account'}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* ============================================================= */}
       {/* SUB-MODAL 1: CREATE / EDIT INVOICE DIALOG                    */}
@@ -1783,6 +1925,7 @@ const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
       });
     } else {
       createXeroInvoice({
+        type: 'ACCREC',
         invoiceNumber,
         contactId,
         contactName,
@@ -1797,7 +1940,8 @@ const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
         totalTax: totals.totalTax,
         total: totals.total,
         amountPaid: 0,
-        amountDue: totals.total
+        amountDue: totals.total,
+        updatedAt: new Date().toISOString()
       });
     }
     onSaved();
@@ -2096,7 +2240,8 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({
         subTotal: total,
         totalTax: total * 0.1,
         total,
-        terms: '30 days validity'
+        terms: '30 days validity',
+        updatedAt: new Date().toISOString()
       });
     }
     onSaved();
@@ -2248,6 +2393,7 @@ const BillFormModal: React.FC<BillFormModalProps> = ({
       });
     } else {
       createXeroBill({
+        type: 'ACCPAY',
         billNumber,
         contactId: `vnd-${Date.now()}`,
         contactName: vendorName,
@@ -2273,7 +2419,8 @@ const BillFormModal: React.FC<BillFormModalProps> = ({
         total: totalAmount,
         amountPaid: 0,
         amountDue: totalAmount,
-        reference
+        reference,
+        updatedAt: new Date().toISOString()
       });
     }
     onSaved();

@@ -645,6 +645,14 @@ export const INITIAL_LEAVE_REQUESTS: LeaveRequest[] = [];
 
 export const INITIAL_INTEGRATIONS: IntegrationConfig[] = [
   {
+    id: 'gmail',
+    name: 'Gmail API & Pub/Sub Sync',
+    category: 'Customer Communication',
+    enabled: true,
+    description: 'Continuous background email sync linked to CRM entities with user-controlled outbound sending.',
+    lastSyncTime: 'Real-time'
+  },
+  {
     id: 'bridgeselect',
     name: 'CER BridgeSelect STC Portal',
     category: 'Regulatory & Rebates',

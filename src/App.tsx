@@ -68,10 +68,33 @@ const MainLayout: React.FC = () => {
   const [isUserProfileModalOpen, setIsUserProfileModalOpen] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [copiedBannerUrl, setCopiedBannerUrl] = useState(false);
+  const [gmailToast, setGmailToast] = useState<{ message: string; isError?: boolean } | null>(null);
   const [isSettingPasswordFromInvite, setIsSettingPasswordFromInvite] = useState(() => {
     if (typeof window === 'undefined') return false;
     return new URLSearchParams(window.location.search).has('invite_token');
   });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('gmail') === 'connected') {
+      const email = params.get('email') || 'Connected Account';
+      setGmailToast({ message: `Gmail account (${email}) successfully connected via OAuth 2.0 with continuous background sync active!` });
+      const url = new URL(window.location.href);
+      url.searchParams.delete('gmail');
+      url.searchParams.delete('email');
+      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+      setTimeout(() => setGmailToast(null), 6000);
+    } else if (params.get('gmail') === 'error') {
+      const msg = params.get('message') || 'Failed to authenticate with Gmail API';
+      setGmailToast({ message: `Gmail OAuth Error: ${msg}`, isError: true });
+      const url = new URL(window.location.href);
+      url.searchParams.delete('gmail');
+      url.searchParams.delete('message');
+      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+      setTimeout(() => setGmailToast(null), 8000);
+    }
+  }, []);
 
   useEffect(() => {
     const handleUrlChange = () => {
@@ -157,6 +180,19 @@ const MainLayout: React.FC = () => {
     <div className={`flex flex-col h-screen w-screen overflow-hidden font-sans transition-colors duration-200 ${
       isLight ? 'bg-slate-100/70 text-slate-900' : 'bg-[#090d16] text-slate-100'
     }`}>
+      {gmailToast && (
+        <div className={`px-4 py-2 text-xs font-semibold text-center flex items-center justify-center gap-2 z-50 transition-all ${
+          gmailToast.isError ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white'
+        }`}>
+          <span>{gmailToast.message}</span>
+          <button
+            onClick={() => setGmailToast(null)}
+            className="ml-3 px-1.5 py-0.5 rounded bg-black/20 hover:bg-black/30 text-white"
+          >
+            &times;
+          </button>
+        </div>
+      )}
       <Header
         onToggleMobileSidebar={() => setIsMobileSidebarOpen(prev => !prev)}
         isMobileSidebarOpen={isMobileSidebarOpen}

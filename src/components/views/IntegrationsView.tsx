@@ -15,9 +15,11 @@ import {
   RefreshCw,
   Sliders,
   Settings,
-  Bell
+  Bell,
+  Mail
 } from 'lucide-react';
 import { IntegrationConfig } from '../../types';
+import { GmailSettingsModal } from '../modals/GmailSettingsModal';
 import { BridgeSelectSettingsModal } from '../modals/BridgeSelectSettingsModal';
 import { XeroSettingsModal } from '../modals/XeroSettingsModal';
 import { OpenSolarSettingsModal } from '../modals/OpenSolarSettingsModal';
@@ -71,10 +73,19 @@ export const IntegrationsView: React.FC = () => {
   const [isTeamsModalOpen, setIsTeamsModalOpen] = useState(false);
   const [teamsInitialTab, setTeamsInitialTab] = useState<'settings' | 'channels' | 'history' | 'test'>('settings');
 
+  // Gmail API OAuth 2.0 & Continuous Sync Modal state
+  const [isGmailModalOpen, setIsGmailModalOpen] = useState(false);
+  const [gmailInitialTab, setGmailInitialTab] = useState<'feed' | 'compose' | 'pubsub' | 'setup'>('feed');
+
   // System Email & Alerts Modal state
   const [isSystemEmailAlertsModalOpen, setIsSystemEmailAlertsModalOpen] = useState(false);
   const [systemEmailAlertsTab, setSystemEmailAlertsTab] = useState<'delivery' | 'sender' | 'triggers' | 'test' | 'logs'>('delivery');
   const [personalEmailConfig, setPersonalEmailConfig] = useState(() => getPersonalEmailConfig());
+
+  const openGmail = (tab: 'feed' | 'compose' | 'pubsub' | 'setup') => {
+    setGmailInitialTab(tab);
+    setIsGmailModalOpen(true);
+  };
 
   const openBridgeSelect = (tab: 'settings' | 'claims' | 'health') => {
     setBridgeSelectInitialTab(tab);
@@ -122,7 +133,7 @@ export const IntegrationsView: React.FC = () => {
   };
 
   const safeIntegrations = (integrations || []).filter(
-    i => i.id !== 'gmail' && i.id !== 'google_calendar' && i.id !== 'gmb'
+    i => i.id !== 'google_calendar' && i.id !== 'gmb'
   );
 
   const handleTest = (integration: IntegrationConfig) => {
@@ -142,6 +153,8 @@ export const IntegrationsView: React.FC = () => {
 
   const getIcon = (id: string) => {
     switch (id) {
+      case 'gmail':
+        return <Mail className="w-5 h-5 text-red-500" />;
       case 'xero':
         return <FileSpreadsheet className="w-5 h-5 text-sky-600" />;
       case 'bridgeselect':
@@ -283,6 +296,7 @@ export const IntegrationsView: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {safeIntegrations.map(integ => {
           const isTesting = testResult?.id === integ.id;
+          const isGmailInteg = integ.id === 'gmail';
           const isBridgeSelectInteg = integ.id === 'bridgeselect';
           const isXeroInteg = integ.id === 'xero';
           const isOpenSolarInteg = integ.id === 'opensolar';
@@ -356,6 +370,37 @@ export const IntegrationsView: React.FC = () => {
                   </span>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
+                    {isGmailInteg && (
+                      <>
+                        <button
+                          onClick={() => openGmail('setup')}
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                            isLight
+                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300'
+                              : 'bg-[#222] hover:bg-[#2a2a2a] text-gray-300 hover:text-white border-[#333]'
+                          }`}
+                          title="Gmail OAuth 2.0, Supabase Credentials & Settings"
+                        >
+                          <Settings className="w-3 h-3 text-red-400" />
+                          <span>Settings</span>
+                        </button>
+                        <button
+                          onClick={() => openGmail('feed')}
+                          className="px-2.5 py-1 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                        >
+                          <Mail className="w-3 h-3 text-red-400" />
+                          <span>Email Hub</span>
+                        </button>
+                        <button
+                          onClick={() => openGmail('compose')}
+                          className="px-2.5 py-1 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                        >
+                          <Send className="w-3 h-3 text-amber-400" />
+                          <span>Compose</span>
+                        </button>
+                      </>
+                    )}
+
                     {isBridgeSelectInteg && (
                       <>
                         <button
@@ -590,6 +635,13 @@ export const IntegrationsView: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Gmail API OAuth 2.0 & Continuous Background Sync Modal */}
+      <GmailSettingsModal
+        isOpen={isGmailModalOpen}
+        onClose={() => setIsGmailModalOpen(false)}
+        initialTab={gmailInitialTab}
+      />
 
       {/* CER BridgeSelect STC Portal Settings Modal */}
       <BridgeSelectSettingsModal

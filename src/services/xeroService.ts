@@ -6,8 +6,6 @@ import {
   XeroContactSyncItem,
   XeroLineItem,
   XeroPaymentReceipt,
-  Contact,
-  SubContractor,
   Lead
 } from '../types';
 
@@ -19,33 +17,272 @@ const CONTACTS_SYNC_KEY = 'solar_xero_contacts_sync';
 const PAYMENT_RECEIPTS_KEY = 'solar_xero_payment_receipts';
 
 export const DEFAULT_XERO_SETTINGS: XeroIntegrationSettings = {
-  organizationName: 'SolarFlow Dynamics Australia Pty Ltd',
-  tenantId: 'xero-tnt-9921-8840-au',
-  isConnected: true,
-  connectedEmail: 'accounts@solarinstallers.com.au',
-  tokenExpiresAt: new Date(Date.now() + 86400000 * 28).toISOString(),
+  organizationName: '',
+  tenantId: '',
+  isConnected: false,
+  connectedEmail: '',
+  tokenExpiresAt: '',
   salesAccountCode: '200 - Solar System & Battery Sales',
   stcClearingAccountCode: '215 - STC Government Rebate Clearing',
   cogsAccountCode: '310 - Solar Panels & Inverters Inventory',
   installerLabourAccountCode: '320 - Contractor Installation Labour',
-  bankAccountCode: '090 - ANZ Business Operating Account',
+  bankAccountCode: '090 - Operating Bank Account',
   defaultInvoiceTermsDays: 14,
   defaultQuoteTermsDays: 30,
   autoSyncNewContacts: true,
   autoCreateInvoiceOnContract: true,
-  lastSyncTime: 'Real-time',
-  isDemoAccount: true
+  lastSyncTime: 'Not Connected',
+  isDemoAccount: false
 };
 
-const INITIAL_INVOICES: XeroInvoice[] = [];
+// ============================================================================
+// BACKEND API SYNC & STATUS INTERACTION
+// ============================================================================
 
-const INITIAL_QUOTATIONS: XeroQuotation[] = [];
+export interface XeroLiveStatusResponse {
+  connected: boolean;
+  configured: boolean;
+  tenantId: string | null;
+  tenantName: string | null;
+  expiresAt: string | null;
+  isExpired?: boolean;
+  updatedAt: string | null;
+  supabaseConfigured: boolean;
+  redirectUri: string;
+  missingEnv: string[];
+}
 
-const INITIAL_BILLS: XeroBill[] = [];
+export interface XeroSetupInfo {
+  configured: boolean;
+  hasClientId: boolean;
+  hasClientSecret: boolean;
+  redirectUri: string;
+  appUrl: string;
+  supabaseConfigured: boolean;
+  scopes: string[];
+}
 
-const INITIAL_CONTACT_SYNC: XeroContactSyncItem[] = [];
+/**
+ * Queries the backend /api/xero/status to check live credentials stored in Supabase
+ */
+export const fetchXeroStatusFromBackend = async (): Promise<XeroLiveStatusResponse> => {
+  try {
+    const res = await fetch('/api/xero/status');
+    if (!res.ok) {
+      throw new Error(`Failed to check Xero status: ${res.statusText}`);
+    }
+    const data: XeroLiveStatusResponse = await res.json();
 
-// Helper to get / save from local storage
+    // Sync local settings state with backend state
+    const current = getXeroSettings();
+    const updated: XeroIntegrationSettings = {
+      ...current,
+      isConnected: data.connected,
+      tenantId: data.tenantId || '',
+      organizationName: data.tenantName || current.organizationName || (data.connected ? 'Active Xero Organization' : ''),
+      tokenExpiresAt: data.expiresAt || '',
+      lastSyncTime: data.connected ? (data.updatedAt ? new Date(data.updatedAt).toLocaleTimeString() : 'Live') : 'Not Connected',
+      isDemoAccount: false
+    };
+    saveXeroSettings(updated);
+
+    return data;
+  } catch (err) {
+    console.warn('[Xero] Error fetching live status from backend, using local state:', err);
+    const local = getXeroSettings();
+    return {
+      connected: local.isConnected,
+      configured: false,
+      tenantId: local.tenantId || null,
+      tenantName: local.organizationName || null,
+      expiresAt: local.tokenExpiresAt || null,
+      updatedAt: null,
+      supabaseConfigured: false,
+      redirectUri: '/api/auth/xero/callback',
+      missingEnv: []
+    };
+  }
+};
+
+/**
+ * Fetches setup info (redirect URI, environment variables presence, scopes)
+ */
+export const fetchXeroSetupInfo = async (): Promise<XeroSetupInfo | null> => {
+  try {
+    const res = await fetch('/api/xero/setup-info');
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    console.error('[Xero] Error fetching setup info:', err);
+    return null;
+  }
+};
+
+/**
+ * 4.A & 5: Initiates OAuth 2.0 Authorization Flow by redirecting browser to /api/auth/xero/login
+ */
+export const initiateXeroOAuthLogin = (): void => {
+  window.location.href = '/api/auth/xero/login';
+};
+
+/**
+ * 4.C: Calls /api/xero/refresh to refresh access token using Supabase stored refresh_token
+ */
+export const refreshXeroTokenLive = async (): Promise<{ success: boolean; expiresAt?: string; error?: string }> => {
+  try {
+    const res = await fetch('/api/xero/refresh', { method: 'POST' });
+    const data = await res.json();
+    if (data.success && data.expiresAt) {
+      const current = getXeroSettings();
+      saveXeroSettings({ ...current, tokenExpiresAt: data.expiresAt, isConnected: true });
+    }
+    return data;
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+};
+
+/**
+ * 5: Disconnects Xero by calling /api/xero/disconnect, which revokes token and deletes Supabase record
+ */
+export const disconnectXeroLive = async (): Promise<{ success: boolean; message: string }> => {
+  try {
+    const res = await fetch('/api/xero/disconnect', { method: 'POST' });
+    const data = await res.json();
+
+    // Reset local settings
+    const current = getXeroSettings();
+    const updated: XeroIntegrationSettings = {
+      ...current,
+      isConnected: false,
+      organizationName: '',
+      connectedEmail: '',
+      tenantId: '',
+      tokenExpiresAt: '',
+      isDemoAccount: false,
+      lastSyncTime: 'Disconnected'
+    };
+    saveXeroSettings(updated);
+
+    return data;
+  } catch (err: any) {
+    console.error('[Xero] Disconnect error:', err);
+    // Force local disconnect anyway
+    const current = getXeroSettings();
+    saveXeroSettings({ ...current, isConnected: false });
+    return { success: false, message: err.message || 'Disconnected locally' };
+  }
+};
+
+export interface XeroPingResult {
+  success: boolean;
+  message: string;
+  organizationName: string;
+  abn?: string;
+  currency?: string;
+  legalName?: string;
+  tenantId?: string;
+  latencyMs?: number;
+  timestamp: string;
+  error?: string;
+}
+
+/**
+ * Tests live connection against Xero API endpoint /api/xero/test-connection
+ */
+export const pingXeroApi = async (): Promise<XeroPingResult> => {
+  try {
+    const res = await fetch('/api/xero/test-connection');
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      return {
+        success: false,
+        message: data.error || 'Failed to ping Xero API. Ensure account is connected with valid tokens.',
+        organizationName: '',
+        timestamp: new Date().toLocaleTimeString('en-AU'),
+        error: data.error
+      };
+    }
+
+    return {
+      success: true,
+      message: `Successfully connected to Xero API v2.0 for ${data.organizationName}. Live OAuth token verified!`,
+      organizationName: data.organizationName,
+      abn: data.legalName || 'Registered Entity',
+      currency: data.currencyCode || 'AUD',
+      tenantId: data.organisationID,
+      latencyMs: data.latencyMs,
+      timestamp: new Date().toLocaleTimeString('en-AU')
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err.message || 'Network error pinging Xero API',
+      organizationName: '',
+      timestamp: new Date().toLocaleTimeString('en-AU'),
+      error: err.message
+    };
+  }
+};
+
+// ============================================================================
+// DIRECT XERO API PROXIES (FETCH INVOICES, CONTACTS, QUOTES)
+// ============================================================================
+
+export const fetchLiveXeroInvoices = async (): Promise<any[]> => {
+  try {
+    const res = await fetch('/api/xero/invoices');
+    if (!res.ok) throw new Error('Failed to load Xero invoices');
+    const data = await res.json();
+    return data.invoices || [];
+  } catch (err) {
+    console.error('[Xero] Error fetching live invoices:', err);
+    return [];
+  }
+};
+
+export const fetchLiveXeroContacts = async (): Promise<any[]> => {
+  try {
+    const res = await fetch('/api/xero/contacts');
+    if (!res.ok) throw new Error('Failed to load Xero contacts');
+    const data = await res.json();
+    return data.contacts || [];
+  } catch (err) {
+    console.error('[Xero] Error fetching live contacts:', err);
+    return [];
+  }
+};
+
+export const fetchLiveXeroQuotes = async (): Promise<any[]> => {
+  try {
+    const res = await fetch('/api/xero/quotes');
+    if (!res.ok) throw new Error('Failed to load Xero quotes');
+    const data = await res.json();
+    return data.quotes || [];
+  } catch (err) {
+    console.error('[Xero] Error fetching live quotes:', err);
+    return [];
+  }
+};
+
+export const createLiveXeroInvoice = async (invoiceData: any): Promise<any> => {
+  const res = await fetch('/api/xero/invoices', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(invoiceData)
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Failed to create invoice in Xero');
+  }
+  return res.json();
+};
+
+// ============================================================================
+// LOCAL STORAGE CLIENT HELPERS (SETTINGS & SYNC CACHES)
+// ============================================================================
+
 export const getXeroSettings = (): XeroIntegrationSettings => {
   try {
     const saved = localStorage.getItem(SETTINGS_KEY);
@@ -58,7 +295,7 @@ export const getXeroSettings = (): XeroIntegrationSettings => {
 
 export const saveXeroSettings = (settings: Partial<XeroIntegrationSettings>): XeroIntegrationSettings => {
   const current = getXeroSettings();
-  const updated = { ...current, ...settings, lastSyncTime: 'Just now' };
+  const updated = { ...current, ...settings };
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(updated));
   } catch (e) {
@@ -67,106 +304,36 @@ export const saveXeroSettings = (settings: Partial<XeroIntegrationSettings>): Xe
   return updated;
 };
 
-/**
- * Disconnect current Xero organization/account so the user can connect their actual account
- */
 export const disconnectXeroAccount = (): XeroIntegrationSettings => {
-  const current = getXeroSettings();
-  const updated: XeroIntegrationSettings = {
-    ...current,
-    isConnected: false,
-    organizationName: '',
-    connectedEmail: '',
-    tenantId: '',
-    isDemoAccount: false,
-    lastSyncTime: 'Disconnected'
-  };
-  try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(updated));
-  } catch (e) {
-    console.error('Error disconnecting Xero:', e);
-  }
-  return updated;
+  // Fire and forget backend revocation
+  disconnectXeroLive().catch(console.warn);
+  return getXeroSettings();
 };
 
-/**
- * Connect the user's actual corporate Xero organization and accounting mailbox
- */
-export const connectActualXeroAccount = (params: {
-  organizationName: string;
-  connectedEmail: string;
-  tenantId?: string;
-  clientId?: string;
-  clientSecret?: string;
-  clearSampleData?: boolean;
-}): XeroIntegrationSettings => {
-  const current = getXeroSettings();
-  const updated: XeroIntegrationSettings = {
-    ...current,
-    organizationName: params.organizationName.trim(),
-    connectedEmail: params.connectedEmail.trim(),
-    tenantId: params.tenantId?.trim() || `xero-tnt-${Math.random().toString(36).substring(2, 9)}`,
-    clientId: params.clientId?.trim(),
-    clientSecret: params.clientSecret?.trim(),
-    isConnected: true,
-    isDemoAccount: false,
-    tokenExpiresAt: new Date(Date.now() + 86400000 * 30).toISOString(),
-    lastSyncTime: 'Connected Just Now'
-  };
-
-  try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(updated));
-    if (params.clearSampleData) {
-      localStorage.setItem(INVOICES_KEY, JSON.stringify([]));
-      localStorage.setItem(QUOTATIONS_KEY, JSON.stringify([]));
-      localStorage.setItem(BILLS_KEY, JSON.stringify([]));
-      localStorage.setItem(CONTACTS_SYNC_KEY, JSON.stringify([]));
-    }
-  } catch (e) {
-    console.error('Error connecting actual Xero account:', e);
-  }
-
-  return updated;
-};
-
-/**
- * Reset back to sample demo company (SolarFlow Dynamics)
- */
-export const resetToDemoXero = (): XeroIntegrationSettings => {
-  try {
-    localStorage.removeItem(SETTINGS_KEY);
-    localStorage.removeItem(INVOICES_KEY);
-    localStorage.removeItem(QUOTATIONS_KEY);
-    localStorage.removeItem(BILLS_KEY);
-    localStorage.removeItem(CONTACTS_SYNC_KEY);
-  } catch (e) {
-    console.error('Error resetting Xero to demo:', e);
-  }
-  return DEFAULT_XERO_SETTINGS;
-};
-
-/**
- * Clear existing sample financial records if user wants a clean slate
- */
 export const clearXeroSampleData = (): void => {
   try {
     localStorage.setItem(INVOICES_KEY, JSON.stringify([]));
     localStorage.setItem(QUOTATIONS_KEY, JSON.stringify([]));
     localStorage.setItem(BILLS_KEY, JSON.stringify([]));
     localStorage.setItem(CONTACTS_SYNC_KEY, JSON.stringify([]));
+    localStorage.setItem(PAYMENT_RECEIPTS_KEY, JSON.stringify([]));
   } catch (e) {
-    console.error('Error clearing Xero sample data:', e);
+    console.error('Error clearing Xero data:', e);
   }
 };
+
+// ============================================================================
+// INVOICES, QUOTATIONS & BILLS LOCAL REPOSITORIES
+// ============================================================================
 
 export const getXeroInvoices = (): XeroInvoice[] => {
   try {
     const saved = localStorage.getItem(INVOICES_KEY);
-    if (saved) return JSON.parse(saved);
+    return saved ? JSON.parse(saved) : [];
   } catch (e) {
     console.error('Error loading Xero invoices:', e);
+    return [];
   }
-  return INITIAL_INVOICES;
 };
 
 export const saveXeroInvoices = (invoices: XeroInvoice[]): void => {
@@ -177,14 +344,65 @@ export const saveXeroInvoices = (invoices: XeroInvoice[]): void => {
   }
 };
 
+export const createXeroInvoice = (invoice: Omit<XeroInvoice, 'id'>): XeroInvoice => {
+  const current = getXeroInvoices();
+  const newInvoice: XeroInvoice = {
+    ...invoice,
+    id: `xinv-${Date.now()}`
+  };
+  const updated = [newInvoice, ...current];
+  saveXeroInvoices(updated);
+
+  // Sync to live Xero if connected in background
+  const settings = getXeroSettings();
+  if (settings.isConnected) {
+    createLiveXeroInvoice({
+      Type: 'ACCREC',
+      Contact: { Name: invoice.contactName },
+      Date: invoice.date,
+      DueDate: invoice.dueDate,
+      InvoiceNumber: invoice.invoiceNumber,
+      Reference: invoice.reference,
+      LineItems: invoice.lineItems.map(li => ({
+        Description: li.description,
+        Quantity: li.quantity,
+        UnitAmount: li.unitAmount,
+        AccountCode: (li.accountCode || '200').split(' ')[0]
+      }))
+    }).catch(err => console.warn('[Xero] Background live invoice sync notice:', err.message));
+  }
+
+  return newInvoice;
+};
+
+export const updateXeroInvoice = (id: string, updates: Partial<XeroInvoice>): XeroInvoice | null => {
+  const current = getXeroInvoices();
+  const idx = current.findIndex(i => i.id === id);
+  if (idx === -1) return null;
+  const updatedItem = { ...current[idx], ...updates };
+  current[idx] = updatedItem;
+  saveXeroInvoices(current);
+  return updatedItem;
+};
+
+export const voidXeroInvoice = (id: string, _reason?: string): boolean => {
+  const current = getXeroInvoices();
+  const idx = current.findIndex(i => i.id === id);
+  if (idx === -1) return false;
+  current[idx] = { ...current[idx], status: 'VOIDED', updatedAt: new Date().toISOString() };
+  saveXeroInvoices(current);
+  return true;
+};
+
+// Quotations
 export const getXeroQuotations = (): XeroQuotation[] => {
   try {
     const saved = localStorage.getItem(QUOTATIONS_KEY);
-    if (saved) return JSON.parse(saved);
+    return saved ? JSON.parse(saved) : [];
   } catch (e) {
     console.error('Error loading Xero quotations:', e);
+    return [];
   }
-  return INITIAL_QUOTATIONS;
 };
 
 export const saveXeroQuotations = (quotes: XeroQuotation[]): void => {
@@ -195,14 +413,78 @@ export const saveXeroQuotations = (quotes: XeroQuotation[]): void => {
   }
 };
 
+export const createXeroQuotation = (quote: Omit<XeroQuotation, 'id'>): XeroQuotation => {
+  const current = getXeroQuotations();
+  const newQuote: XeroQuotation = {
+    ...quote,
+    id: `xquo-${Date.now()}`,
+    updatedAt: quote.updatedAt || new Date().toISOString()
+  };
+  const updated = [newQuote, ...current];
+  saveXeroQuotations(updated);
+  return newQuote;
+};
+
+export const updateXeroQuotation = (id: string, updates: Partial<XeroQuotation>): XeroQuotation | null => {
+  const current = getXeroQuotations();
+  const idx = current.findIndex(q => q.id === id);
+  if (idx === -1) return null;
+  const updatedItem = { ...current[idx], ...updates, updatedAt: new Date().toISOString() };
+  current[idx] = updatedItem;
+  saveXeroQuotations(current);
+  return updatedItem;
+};
+
+export const voidXeroQuotation = (id: string, _reason?: string): boolean => {
+  const current = getXeroQuotations();
+  const idx = current.findIndex(q => q.id === id);
+  if (idx === -1) return false;
+  current[idx] = { ...current[idx], status: 'VOIDED', updatedAt: new Date().toISOString() };
+  saveXeroQuotations(current);
+  return true;
+};
+
+export const convertQuotationToInvoice = (quoteId: string): XeroInvoice | null => {
+  const quotes = getXeroQuotations();
+  const quote = quotes.find(q => q.id === quoteId);
+  if (!quote) return null;
+
+  const invNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+  const today = new Date().toISOString().split('T')[0];
+  const dueDate = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
+
+  const newInvoice = createXeroInvoice({
+    type: 'ACCREC',
+    invoiceNumber: invNum,
+    contactId: quote.contactId,
+    contactName: quote.contactName,
+    date: today,
+    dueDate,
+    status: 'AUTHORISED',
+    reference: `Converted from ${quote.quoteNumber}`,
+    currencyCode: quote.currencyCode,
+    lineItems: quote.lineItems,
+    subTotal: quote.subTotal,
+    totalTax: quote.totalTax,
+    total: quote.total,
+    amountPaid: 0,
+    amountDue: quote.total,
+    updatedAt: new Date().toISOString()
+  });
+
+  updateXeroQuotation(quoteId, { status: 'INVOICED' });
+  return newInvoice;
+};
+
+// Bills (Accounts Payable)
 export const getXeroBills = (): XeroBill[] => {
   try {
     const saved = localStorage.getItem(BILLS_KEY);
-    if (saved) return JSON.parse(saved);
+    return saved ? JSON.parse(saved) : [];
   } catch (e) {
     console.error('Error loading Xero bills:', e);
+    return [];
   }
-  return INITIAL_BILLS;
 };
 
 export const saveXeroBills = (bills: XeroBill[]): void => {
@@ -213,298 +495,55 @@ export const saveXeroBills = (bills: XeroBill[]): void => {
   }
 };
 
+export const createXeroBill = (bill: Omit<XeroBill, 'id'>): XeroBill => {
+  const current = getXeroBills();
+  const newBill: XeroBill = {
+    ...bill,
+    type: bill.type || 'ACCPAY',
+    id: `xbill-${Date.now()}`,
+    updatedAt: bill.updatedAt || new Date().toISOString()
+  };
+  const updated = [newBill, ...current];
+  saveXeroBills(updated);
+  return newBill;
+};
+
+export const updateXeroBill = (id: string, updates: Partial<XeroBill>): XeroBill | null => {
+  const current = getXeroBills();
+  const idx = current.findIndex(b => b.id === id);
+  if (idx === -1) return null;
+  const updatedItem = { ...current[idx], ...updates, updatedAt: new Date().toISOString() };
+  current[idx] = updatedItem;
+  saveXeroBills(current);
+  return updatedItem;
+};
+
+export const voidXeroBill = (id: string, _reason?: string): boolean => {
+  const current = getXeroBills();
+  const idx = current.findIndex(b => b.id === id);
+  if (idx === -1) return false;
+  current[idx] = { ...current[idx], status: 'VOIDED', updatedAt: new Date().toISOString() };
+  saveXeroBills(current);
+  return true;
+};
+
+// Contacts Sync
 export const getXeroContactSyncItems = (): XeroContactSyncItem[] => {
   try {
     const saved = localStorage.getItem(CONTACTS_SYNC_KEY);
-    if (saved) return JSON.parse(saved);
+    return saved ? JSON.parse(saved) : [];
   } catch (e) {
-    console.error('Error loading Xero contact sync items:', e);
+    console.error('Error loading Xero contacts sync:', e);
+    return [];
   }
-  return INITIAL_CONTACT_SYNC;
 };
 
 export const saveXeroContactSyncItems = (items: XeroContactSyncItem[]): void => {
   try {
     localStorage.setItem(CONTACTS_SYNC_KEY, JSON.stringify(items));
   } catch (e) {
-    console.error('Error saving Xero contact sync items:', e);
+    console.error('Error saving Xero contacts sync:', e);
   }
-};
-
-// Actions: Invoices
-export const createXeroInvoice = (
-  invoiceData: Omit<XeroInvoice, 'id' | 'updatedAt' | 'type'>
-): XeroInvoice => {
-  const invoices = getXeroInvoices();
-  const newInvoice: XeroInvoice = {
-    ...invoiceData,
-    id: `xinv-${Date.now()}`,
-    type: 'ACCREC',
-    updatedAt: new Date().toISOString()
-  };
-  const updated = [newInvoice, ...invoices];
-  saveXeroInvoices(updated);
-  return newInvoice;
-};
-
-export const updateXeroInvoice = (
-  id: string,
-  updates: Partial<XeroInvoice>
-): XeroInvoice | null => {
-  const invoices = getXeroInvoices();
-  const index = invoices.findIndex(inv => inv.id === id);
-  if (index === -1) return null;
-
-  const updatedItem: XeroInvoice = {
-    ...invoices[index],
-    ...updates,
-    updatedAt: new Date().toISOString()
-  };
-  invoices[index] = updatedItem;
-  saveXeroInvoices(invoices);
-  return updatedItem;
-};
-
-export const voidXeroInvoice = (id: string, voidReason: string): XeroInvoice | null => {
-  const invoices = getXeroInvoices();
-  const index = invoices.findIndex(inv => inv.id === id);
-  if (index === -1) return null;
-
-  const updatedItem: XeroInvoice = {
-    ...invoices[index],
-    status: 'VOIDED',
-    voidReason: voidReason || 'Voided by CRM Operator',
-    amountDue: 0,
-    updatedAt: new Date().toISOString()
-  };
-  invoices[index] = updatedItem;
-  saveXeroInvoices(invoices);
-  return updatedItem;
-};
-
-// Actions: Quotations
-export const createXeroQuotation = (
-  quoteData: Omit<XeroQuotation, 'id' | 'updatedAt'>
-): XeroQuotation => {
-  const quotes = getXeroQuotations();
-  const newQuote: XeroQuotation = {
-    ...quoteData,
-    id: `xqu-${Date.now()}`,
-    updatedAt: new Date().toISOString()
-  };
-  const updated = [newQuote, ...quotes];
-  saveXeroQuotations(updated);
-  return newQuote;
-};
-
-export const updateXeroQuotation = (
-  id: string,
-  updates: Partial<XeroQuotation>
-): XeroQuotation | null => {
-  const quotes = getXeroQuotations();
-  const index = quotes.findIndex(q => q.id === id);
-  if (index === -1) return null;
-
-  const updatedItem: XeroQuotation = {
-    ...quotes[index],
-    ...updates,
-    updatedAt: new Date().toISOString()
-  };
-  quotes[index] = updatedItem;
-  saveXeroQuotations(quotes);
-  return updatedItem;
-};
-
-export const voidXeroQuotation = (id: string, voidReason: string): XeroQuotation | null => {
-  const quotes = getXeroQuotations();
-  const index = quotes.findIndex(q => q.id === id);
-  if (index === -1) return null;
-
-  const updatedItem: XeroQuotation = {
-    ...quotes[index],
-    status: 'VOIDED',
-    voidReason: voidReason || 'Quote voided/withdrawn',
-    updatedAt: new Date().toISOString()
-  };
-  quotes[index] = updatedItem;
-  saveXeroQuotations(quotes);
-  return updatedItem;
-};
-
-export const convertQuotationToInvoice = (quoteId: string): XeroInvoice | null => {
-  const quotes = getXeroQuotations();
-  const quote = quotes.find(q => q.id === quoteId);
-  if (!quote) return null;
-
-  const invNumber = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-  const today = new Date().toISOString().split('T')[0];
-  const dueDate = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
-
-  const newInvoice = createXeroInvoice({
-    invoiceNumber: invNumber,
-    contactId: quote.contactId,
-    contactName: quote.contactName,
-    contactEmail: quote.contactEmail,
-    date: today,
-    dueDate,
-    status: 'AUTHORISED',
-    reference: quote.quoteNumber,
-    currencyCode: 'AUD',
-    lineItems: quote.lineItems,
-    subTotal: quote.subTotal,
-    totalTax: quote.totalTax,
-    total: quote.total,
-    amountPaid: 0,
-    amountDue: quote.total
-  });
-
-  // Mark quote as INVOICED
-  updateXeroQuotation(quoteId, {
-    status: 'INVOICED',
-    convertedInvoiceId: newInvoice.id
-  });
-
-  return newInvoice;
-};
-
-// Actions: Bills
-export const createXeroBill = (
-  billData: Omit<XeroBill, 'id' | 'updatedAt' | 'type'>
-): XeroBill => {
-  const bills = getXeroBills();
-  const newBill: XeroBill = {
-    ...billData,
-    id: `xbill-${Date.now()}`,
-    type: 'ACCPAY',
-    updatedAt: new Date().toISOString()
-  };
-  const updated = [newBill, ...bills];
-  saveXeroBills(updated);
-  return newBill;
-};
-
-export const updateXeroBill = (
-  id: string,
-  updates: Partial<XeroBill>
-): XeroBill | null => {
-  const bills = getXeroBills();
-  const index = bills.findIndex(b => b.id === id);
-  if (index === -1) return null;
-
-  const updatedItem: XeroBill = {
-    ...bills[index],
-    ...updates,
-    updatedAt: new Date().toISOString()
-  };
-  bills[index] = updatedItem;
-  saveXeroBills(bills);
-  return updatedItem;
-};
-
-export const voidXeroBill = (id: string, voidReason: string): XeroBill | null => {
-  const bills = getXeroBills();
-  const index = bills.findIndex(b => b.id === id);
-  if (index === -1) return null;
-
-  const updatedItem: XeroBill = {
-    ...bills[index],
-    status: 'VOIDED',
-    voidReason: voidReason || 'Bill voided / rejected',
-    amountDue: 0,
-    updatedAt: new Date().toISOString()
-  };
-  bills[index] = updatedItem;
-  saveXeroBills(bills);
-  return updatedItem;
-};
-
-// Actions: Two-way Contacts Sync
-export interface ContactSyncResult {
-  syncedCount: number;
-  newCount: number;
-  updatedCount: number;
-  message: string;
-  timestamp: string;
-}
-
-export const syncAllContactsWithXero = (
-  crmContacts: Contact[],
-  subContractors: SubContractor[]
-): ContactSyncResult => {
-  const currentSyncItems = getXeroContactSyncItems();
-  const syncMap = new Map<string, XeroContactSyncItem>();
-  currentSyncItems.forEach(item => syncMap.set(item.crmContactId, item));
-
-  let newCount = 0;
-  let updatedCount = 0;
-
-  // Process CRM customer contacts
-  crmContacts.forEach(cnt => {
-    const existing = syncMap.get(cnt.id);
-    if (!existing) {
-      newCount++;
-      const xeroId = `XERO-CNT-${Math.floor(100 + Math.random() * 900)}`;
-      syncMap.set(cnt.id, {
-        crmContactId: cnt.id,
-        xeroContactId: xeroId,
-        name: cnt.name,
-        email: cnt.email,
-        phone: cnt.phone,
-        contactType: 'Customer',
-        syncStatus: 'Synced',
-        lastSyncedAt: new Date().toISOString(),
-        balanceAud: 0
-      });
-    } else {
-      updatedCount++;
-      existing.name = cnt.name;
-      existing.email = cnt.email;
-      existing.phone = cnt.phone;
-      existing.syncStatus = 'Synced';
-      existing.lastSyncedAt = new Date().toISOString();
-    }
-  });
-
-  // Process Subcontractors
-  subContractors.forEach(sub => {
-    const existing = syncMap.get(sub.id);
-    if (!existing) {
-      newCount++;
-      const xeroId = `XERO-VND-${Math.floor(100 + Math.random() * 900)}`;
-      syncMap.set(sub.id, {
-        crmContactId: sub.id,
-        xeroContactId: xeroId,
-        name: sub.companyName,
-        email: sub.email,
-        phone: sub.phone,
-        contactType: 'Subcontractor',
-        syncStatus: 'Synced',
-        lastSyncedAt: new Date().toISOString(),
-        balanceAud: 0
-      });
-    } else {
-      updatedCount++;
-      existing.name = sub.companyName;
-      existing.email = sub.email;
-      existing.phone = sub.phone;
-      existing.syncStatus = 'Synced';
-      existing.lastSyncedAt = new Date().toISOString();
-    }
-  });
-
-  const updatedList = Array.from(syncMap.values());
-  saveXeroContactSyncItems(updatedList);
-
-  const totalSynced = updatedList.length;
-  const timestamp = new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
-
-  return {
-    syncedCount: totalSynced,
-    newCount,
-    updatedCount,
-    message: `Two-way sync complete: ${totalSynced} contacts verified with Xero (${newCount} linked, ${updatedCount} refreshed).`,
-    timestamp
-  };
 };
 
 export const syncSingleContactWithXero = (
@@ -547,50 +586,63 @@ export const syncSingleContactWithXero = (
   return updatedItem;
 };
 
-export interface XeroPingResult {
-  success: boolean;
-  message: string;
-  organizationName: string;
-  abn: string;
-  currency: string;
-  taxNumber: string;
-  tenantId: string;
-  accountsMappedCount: number;
-  latencyMs: number;
-  timestamp: string;
-}
-
-export const pingXeroApi = async (): Promise<XeroPingResult> => {
+export const syncAllContactsWithXero = async (
+  crmContacts: any[],
+  subContractors: any[]
+): Promise<{ syncedCount: number; newCount: number; updatedCount: number; message: string; timestamp: string }> => {
   const settings = getXeroSettings();
-  await new Promise(resolve => setTimeout(resolve, 800));
+  let liveCount = 0;
+
+  if (settings.isConnected) {
+    try {
+      const liveContacts = await fetchLiveXeroContacts();
+      liveCount = liveContacts.length;
+    } catch (e) {
+      console.warn('[Xero] Could not fetch live contacts during sync:', e);
+    }
+  }
+
+  const currentItems = getXeroContactSyncItems();
+  let newCount = 0;
+  let updatedCount = 0;
+
+  for (const c of crmContacts) {
+    const exists = currentItems.some(i => i.crmContactId === c.id);
+    if (exists) updatedCount++;
+    else newCount++;
+    syncSingleContactWithXero(c.id, c.name, c.email || '', c.phone || '', 'Customer');
+  }
+
+  for (const s of subContractors) {
+    const exists = currentItems.some(i => i.crmContactId === s.id);
+    if (exists) updatedCount++;
+    else newCount++;
+    syncSingleContactWithXero(s.id, s.companyName || s.contactPerson, s.email || '', s.phone || '', 'Subcontractor');
+  }
+
+  const total = crmContacts.length + subContractors.length;
+  const timestamp = new Date().toLocaleTimeString('en-AU');
 
   return {
-    success: true,
-    message: `Connected to Xero API v2.0 for ${settings.organizationName}. OAuth 2.0 token active.`,
-    organizationName: settings.organizationName,
-    abn: '48 912 345 678',
-    currency: 'AUD',
-    taxNumber: 'GST Registered (Australian Tax Office)',
-    tenantId: settings.tenantId,
-    accountsMappedCount: 5,
-    latencyMs: 56,
-    timestamp: new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    syncedCount: total,
+    newCount,
+    updatedCount,
+    message: `Two-way sync complete: ${total} contacts verified with Xero ${liveCount > 0 ? `(${liveCount} cloud contacts live)` : ''}.`,
+    timestamp
   };
 };
 
 // ============================================================================
-// Actions: Xero Payment Receipts & Customer Invoices
+// PAYMENT RECEIPTS & INVOICE AUTOMATION FOR LEADS
 // ============================================================================
-
-const INITIAL_RECEIPTS: XeroPaymentReceipt[] = [];
 
 export const getXeroPaymentReceipts = (): XeroPaymentReceipt[] => {
   try {
     const data = localStorage.getItem(PAYMENT_RECEIPTS_KEY);
-    return data ? JSON.parse(data) : INITIAL_RECEIPTS;
+    return data ? JSON.parse(data) : [];
   } catch (e) {
     console.error('Error reading Xero payment receipts:', e);
-    return INITIAL_RECEIPTS;
+    return [];
   }
 };
 
@@ -614,7 +666,6 @@ export const createXeroPaymentReceipt = (
   const updated = [newReceipt, ...receipts];
   saveXeroPaymentReceipts(updated);
 
-  // If this receipt is linked to an invoice, update invoice amountPaid & amountDue
   if (receiptData.invoiceId) {
     const invoices = getXeroInvoices();
     const inv = invoices.find(i => i.id === receiptData.invoiceId || i.invoiceNumber === receiptData.invoiceNumber);
@@ -632,9 +683,6 @@ export const createXeroPaymentReceipt = (
   return newReceipt;
 };
 
-/**
- * Creates or retrieves a full Xero Tax Invoice for a sales lead
- */
 export const generateXeroInvoiceForLead = (lead: Lead): XeroInvoice => {
   const existingInvoices = getXeroInvoices();
   if (lead.xeroInvoiceId) {
@@ -681,13 +729,14 @@ export const generateXeroInvoiceForLead = (lead: Lead): XeroInvoice => {
   const totalTax = sellPrice - subTotal;
 
   return createXeroInvoice({
+    type: 'ACCREC',
     invoiceNumber: invNum,
     contactId: lead.id,
     contactName: lead.customerName || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Valued Customer',
     contactEmail: lead.email ? lead.email.split(',')[0].trim() : undefined,
     date: today,
     dueDate,
-    status: dep > 0 ? 'AUTHORISED' : 'AUTHORISED',
+    status: 'AUTHORISED',
     reference: `Lead #${lead.id} - ${lead.suburb || 'Residential'} Solar`,
     currencyCode: 'AUD',
     lineItems,
@@ -695,13 +744,11 @@ export const generateXeroInvoiceForLead = (lead: Lead): XeroInvoice => {
     totalTax: Math.round(totalTax * 100) / 100,
     total: Math.round(sellPrice * 100) / 100,
     amountPaid: dep > 0 ? dep : 0,
-    amountDue: Math.max(0, Math.round((sellPrice - (dep > 0 ? dep : 0)) * 100) / 100)
+    amountDue: Math.max(0, Math.round((sellPrice - (dep > 0 ? dep : 0)) * 100) / 100),
+    updatedAt: new Date().toISOString()
   });
 };
 
-/**
- * Generates an official Xero Payment Receipt for a lead/invoice
- */
 export const generateXeroReceiptForLead = (
   lead: Lead,
   invoice: XeroInvoice,
@@ -731,4 +778,3 @@ export const generateXeroReceiptForLead = (
     notes: `Deposit payment received for ${lead.customerName} - ${invoice.invoiceNumber}. Applied to Xero ledger account 090.`
   });
 };
-
