@@ -32,13 +32,6 @@ import {
   sendSystemEmail
 } from '../../services/systemAlertsEmailService';
 import {
-  getConnectedWorkspaceUser,
-  verifyGoogleWorkspaceAccount,
-  googleSignIn,
-  connectDirectWorkspaceAccount,
-  GoogleAccountDiagnostics
-} from '../../services/googleWorkspace';
-import {
   PersonalEmailIntegrationConfig,
   OutboundEmailLog,
   EmailDeliveryMode
@@ -49,31 +42,27 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   initialTab?: 'delivery' | 'sender' | 'triggers' | 'test' | 'logs';
-  onOpenGoogleWorkspace?: () => void;
 }
 
 export const SystemEmailAlertsModal: React.FC<Props> = ({
   isOpen,
   onClose,
-  initialTab = 'delivery',
-  onOpenGoogleWorkspace
+  initialTab = 'delivery'
 }) => {
   const { currentUser: appUser, connectedDomain } = useApp();
   const [activeTab, setActiveTab] = useState<'delivery' | 'sender' | 'triggers' | 'test' | 'logs'>(initialTab);
   const [config, setConfig] = useState<PersonalEmailIntegrationConfig>(() => getPersonalEmailConfig());
   const [logs, setLogs] = useState<OutboundEmailLog[]>(() => getOutboundEmailLogs());
-  const [diagnostics, setDiagnostics] = useState<GoogleAccountDiagnostics | null>(null);
 
   // Status & Feedback
   const [isSaving, setIsSaving] = useState(false);
-  const [isSwitchingAccount, setIsSwitchingAccount] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; details?: any } | null>(null);
 
   // Test form state
   const [testRecipient, setTestRecipient] = useState(
-    () => config.senderEmail || getConnectedWorkspaceUser()?.email || appUser?.email || `admin@${connectedDomain}`
+    () => config.senderEmail || appUser?.email || `admin@${connectedDomain}`
   );
   const [testCustomNote, setTestCustomNote] = useState('Testing system automated alert dispatch pipeline.');
 
@@ -93,22 +82,12 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
       const currentConfig = getPersonalEmailConfig();
       setConfig(currentConfig);
       setTestRecipient(
-        currentConfig.senderEmail || getConnectedWorkspaceUser()?.email || appUser?.email || `admin@${connectedDomain}`
+        currentConfig.senderEmail || appUser?.email || `admin@${connectedDomain}`
       );
       setLogs(getOutboundEmailLogs());
-      loadDiagnostics();
       setActiveTab(initialTab);
     }
   }, [isOpen, initialTab, appUser?.email, connectedDomain]);
-
-  const loadDiagnostics = async () => {
-    try {
-      const diag = await verifyGoogleWorkspaceAccount();
-      setDiagnostics(diag);
-    } catch (e) {
-      console.warn('Diagnostics error:', e);
-    }
-  };
 
   const handleSave = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -229,7 +208,7 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                 </span>
               </div>
               <p className="text-xs text-gray-400">
-                Configure Google Workspace, SMTP relay, cloud webhooks, and automated system alert dispatches.
+                Configure SMTP relay, cloud webhooks, and automated system alert dispatches.
               </p>
             </div>
           </div>
@@ -324,24 +303,18 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                   <span>Choose Your Outbound Email Delivery Architecture</span>
                 </div>
                 <p className="text-[11px] text-gray-300 leading-relaxed">
-                  Select how system alerts, lead proposals, project milestones, and portal links are sent. If you connect via Google Workspace, live emails will be dispatched directly through your connected Gmail account. You can also configure a personal SMTP server, Google App Password, or cloud webhook gateway.
+                  Select how system alerts, lead proposals, project milestones, and portal links are sent. You can configure a personal SMTP server, authenticated relay credentials, or a cloud webhook gateway.
                 </p>
               </div>
 
               {/* Delivery Mode Selector Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 {[
                   {
-                    id: 'google_workspace' as EmailDeliveryMode,
-                    title: 'Google Workspace',
-                    badge: 'Gmail REST API',
-                    desc: 'Sends via your authenticated Google Workspace / Gmail mailbox with OAuth security.'
-                  },
-                  {
                     id: 'custom_smtp' as EmailDeliveryMode,
-                    title: 'Personal SMTP / App Password',
+                    title: 'Personal SMTP / Relay',
                     badge: 'Direct Relay',
-                    desc: 'Connect via smtp.gmail.com with a 16-char App Password or corporate SMTP host.'
+                    desc: 'Connect via custom corporate SMTP host or relay with host, port and credentials.'
                   },
                   {
                     id: 'webhook_gateway' as EmailDeliveryMode,
@@ -376,107 +349,15 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                 ))}
               </div>
 
-              {/* Sub-Panel: Google Workspace Mode */}
-              {config.deliveryMode === 'google_workspace' && (
-                <div className="p-4 rounded-xl bg-[#141414] border border-[#2d2d2d] space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-emerald-400" />
-                      <strong className="text-white text-sm">Google Workspace Mailbox Connection</strong>
-                    </div>
-                    {diagnostics?.isConnected ? (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" />
-                        Connected ({diagnostics.userEmail || config.senderEmail})
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                        Ready to Connect
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-[11px] text-gray-400 leading-relaxed">
-                    When active, system alerts are sent through your Google Workspace account with official DKIM/SPF domain authorization.
-                  </p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-300 mb-1">
-                        Connected Account Email
-                      </label>
-                      <input
-                        type="email"
-                        value={config.senderEmail}
-                        onChange={e => setConfig({ ...config, senderEmail: e.target.value })}
-                        className="w-full px-3 py-2 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none"
-                        placeholder={`admin@${connectedDomain}`}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-300 mb-1">
-                        Optional Personal OAuth Access Token
-                      </label>
-                      <input
-                        type="password"
-                        value={config.customGoogleAccessToken || ''}
-                        onChange={e => setConfig({ ...config, customGoogleAccessToken: e.target.value })}
-                        className="w-full px-3 py-2 bg-[#1c1c1c] border border-[#333] rounded-lg text-xs text-white focus:border-[#bef264] outline-none font-mono"
-                        placeholder="ya29.a0AfH6... (optional manual override)"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-2 flex items-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        connectDirectWorkspaceAccount({ email: config.senderEmail });
-                        loadDiagnostics();
-                        setSaveSuccess(`Workspace account linked for ${config.senderEmail}`);
-                        setTimeout(() => setSaveSuccess(null), 3000);
-                      }}
-                      className="px-3.5 py-1.5 bg-[#bef264] hover:bg-[#a3e635] text-black text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Verify &amp; Link Workspace Mailbox</span>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isSwitchingAccount}
-                      onClick={async () => {
-                        setIsSwitchingAccount(true);
-                        try {
-                          const res = await googleSignIn({ prompt: 'select_account' });
-                          if (res) {
-                            loadDiagnostics();
-                            setSaveSuccess('Google account switched successfully!');
-                            setTimeout(() => setSaveSuccess(null), 3000);
-                          }
-                        } catch (err: any) {
-                          console.info('Switch Google account dismissal:', err);
-                        } finally {
-                          setIsSwitchingAccount(false);
-                        }
-                      }}
-                      className="px-3.5 py-1.5 bg-[#252525] hover:bg-[#333] text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 border border-[#3e3e3e] disabled:opacity-50"
-                    >
-                      <UserCheck className={`w-3.5 h-3.5 text-blue-400 ${isSwitchingAccount ? 'animate-pulse' : ''}`} />
-                      <span>{isSwitchingAccount ? 'Opening Google...' : 'Switch Google Account'}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Sub-Panel: Custom SMTP / Google App Password */}
+              {/* Sub-Panel: Custom SMTP */}
               {config.deliveryMode === 'custom_smtp' && (
                 <div className="p-4 rounded-xl bg-[#141414] border border-[#2d2d2d] space-y-3">
                   <div className="flex items-center gap-2">
                     <Server className="w-4 h-4 text-amber-400" />
-                    <strong className="text-white text-sm">Personal SMTP Server / Google App Password</strong>
+                    <strong className="text-white text-sm">Personal SMTP Server / Relay Credentials</strong>
                   </div>
                   <p className="text-[11px] text-gray-400 leading-relaxed">
-                    To send directly using your Google account without OAuth popups, generate a 16-character <strong>Google App Password</strong> in your Google Account settings (Security &rarr; 2-Step Verification &rarr; App passwords).
+                    Configure your corporate SMTP mail server (e.g. Mailgun, SendGrid SMTP, Amazon SES, or corporate mail exchange).
                   </p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -993,28 +874,15 @@ export const SystemEmailAlertsModal: React.FC<Props> = ({
                     </div>
                   )}
 
-                  {!testResult.success && testResult.message.includes('Google Workspace') && (
+                  {!testResult.success && (
                     <div className="pt-2 flex items-center gap-2 flex-wrap">
-                      {onOpenGoogleWorkspace && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onClose();
-                            onOpenGoogleWorkspace();
-                          }}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition-colors shadow-xs"
-                        >
-                          <Sparkles className="w-3.5 h-3.5" />
-                          <span>Authorize Google Workspace Now</span>
-                        </button>
-                      )}
                       <button
                         type="button"
                         onClick={() => setActiveTab('delivery')}
                         className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-colors border border-white/20"
                       >
                         <Sliders className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Switch Delivery Mode (Custom SMTP / Webhook)</span>
+                        <span>Check Delivery Settings (Custom SMTP / Webhook)</span>
                       </button>
                     </div>
                   )}

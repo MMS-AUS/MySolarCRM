@@ -1,6 +1,6 @@
 {
   "name": "MySolarCRM",
-  "description": "Enterprise Australian Solar CRM & ERP with CER BridgeSelect STC Portal, Xero financial sync, OpenSolar 3D, Google My Business Reviews, MessageMedia SMS, Mailchimp, WhatsApp Business API, VoIPLine Telecom AU, Meta Ads Lead Sync, and Microsoft Teams Webhooks.",
+  "description": "Enterprise Australian Solar CRM & ERP with CER BridgeSelect STC Portal, Xero financial sync, OpenSolar 3D, MessageMedia SMS, Mailchimp, WhatsApp Business API, VoIPLine Telecom AU, Meta Ads Lead Sync, and Microsoft Teams Webhooks.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

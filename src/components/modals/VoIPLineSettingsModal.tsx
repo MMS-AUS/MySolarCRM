@@ -614,7 +614,7 @@ export const VoIPLineSettingsModal: React.FC<VoIPLineSettingsModalProps> = ({
                 <ul className="list-disc list-inside space-y-1 text-[11px]">
                   <li>Selecting <code className="text-cyan-400">Interested - 10kW+</code> promotes lead stage to Qualified.</li>
                   <li>Selecting <code className="text-cyan-400">Battery Add-on Quote</code> adds Tesla/Sungrow battery flag.</li>
-                  <li>Selecting <code className="text-cyan-400">Follow-up Scheduled</code> opens Google Calendar site survey modal.</li>
+                  <li>Selecting <code className="text-cyan-400">Follow-up Scheduled</code> creates a calendar site survey reminder.</li>
                 </ul>
               </div>
             </div>

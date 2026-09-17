@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { Contact, AustralianState, ContactAddress } from '../../types';
 import { classifyAustralianPostcode } from '../../utils/australianPostcodes';
-import { GoogleWorkspaceModal } from '../google/GoogleWorkspaceModal';
 
 export const ContactsView: React.FC = () => {
   const {
@@ -46,23 +45,6 @@ export const ContactsView: React.FC = () => {
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [syncStatusMsg, setSyncStatusMsg] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
-
-  // Google Workspace modal state for contacts
-  const [workspaceModalOpen, setWorkspaceModalOpen] = useState(false);
-  const [workspaceModalTab, setWorkspaceModalTab] = useState<'gmail' | 'calendar' | 'audit'>('gmail');
-  const [selectedContactForWorkspace, setSelectedContactForWorkspace] = useState<Contact | null>(null);
-
-  const handleOpenGmail = (contact: Contact) => {
-    setSelectedContactForWorkspace(contact);
-    setWorkspaceModalTab('gmail');
-    setWorkspaceModalOpen(true);
-  };
-
-  const handleOpenCalendar = (contact: Contact) => {
-    setSelectedContactForWorkspace(contact);
-    setWorkspaceModalTab('calendar');
-    setWorkspaceModalOpen(true);
-  };
 
   // Address modal state
   const [managingAddressesContact, setManagingAddressesContact] = useState<Contact | null>(null);
@@ -707,22 +689,13 @@ export const ContactsView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenGmail(contact)}
-                    className="p-2 rounded-lg bg-[#262626] hover:bg-red-500/20 text-red-400 border border-[#333] transition-colors"
-                    title="Send Proposal / Email via Gmail"
+                  <a
+                    href={`mailto:${contact.email}`}
+                    className="p-2 rounded-lg bg-[#262626] hover:bg-[#333] text-gray-300 border border-[#333] transition-colors"
+                    title={`Email ${contact.email}`}
                   >
                     <Mail className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenCalendar(contact)}
-                    className="p-2 rounded-lg bg-[#262626] hover:bg-blue-500/20 text-blue-400 border border-[#333] transition-colors"
-                    title="Schedule Site Inspection on Google Calendar"
-                  >
-                    <Calendar className="w-3.5 h-3.5" />
-                  </button>
+                  </a>
                   <button
                     type="button"
                     onClick={() => setIsVoipDialerOpen(true)}
@@ -1477,20 +1450,6 @@ export const ContactsView: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Google Workspace Modal (Gmail & Google Calendar) */}
-      <GoogleWorkspaceModal
-        isOpen={workspaceModalOpen}
-        onClose={() => setWorkspaceModalOpen(false)}
-        initialTab={workspaceModalTab}
-        defaultRecipient={selectedContactForWorkspace?.email || ''}
-        defaultCustomerName={selectedContactForWorkspace?.name || ''}
-        defaultEventLocation={
-          selectedContactForWorkspace
-            ? `${selectedContactForWorkspace.street || ''}, ${selectedContactForWorkspace.suburb || ''} ${selectedContactForWorkspace.state || ''} ${selectedContactForWorkspace.postcode || ''}`.trim()
-            : ''
-        }
-      />
     </div>
   );
 };

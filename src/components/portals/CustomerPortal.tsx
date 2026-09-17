@@ -449,14 +449,14 @@ export const CustomerPortal: React.FC = () => {
         ) : null}
       </div>
 
-      {/* Customer Review Section (Automatically syncs to Admin Portal & Google My Business) */}
+      {/* Customer Review Section */}
       <div className="bg-[#1e1e1e] p-5 sm:p-6 rounded-xl border border-[#2d2d2d] shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-[#262626] pb-3">
           <div className="flex items-center gap-2">
             <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
             <h3 className="text-base font-bold text-white">Write a Review for AusSolar</h3>
           </div>
-          <span className="text-xs text-gray-400">Google My Business &amp; SolarQuotes Partner</span>
+          <span className="text-xs text-gray-400">Solar Customer Feedback</span>
         </div>
 
         {existingReview ? (
@@ -475,7 +475,7 @@ export const CustomerPortal: React.FC = () => {
                 ))}
               </div>
               <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
-                Synced with Admin &amp; Google My Business
+                Review Submitted
               </span>
             </div>
             <p className="text-xs text-gray-300 italic">"{existingReview.comment}"</p>
@@ -528,7 +528,7 @@ export const CustomerPortal: React.FC = () => {
               className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] disabled:opacity-40 text-black text-xs font-bold rounded-lg shadow-xs flex items-center gap-1.5 transition-colors"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>Submit Review to Admin &amp; Google My Business</span>
+              <span>Submit Customer Review</span>
             </button>
           </form>
         )}

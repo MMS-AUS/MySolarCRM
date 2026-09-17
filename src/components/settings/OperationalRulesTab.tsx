@@ -122,7 +122,7 @@ export const OperationalRulesTab: React.FC = () => {
           </button>
           <button
             type="submit"
-            className="flex items-center gap-1.5 px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-black text-xs font-bold rounded-lg transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 text-xs font-bold rounded-lg transition-colors shadow-xs"
           >
             <Save className="w-3.5 h-3.5" />
             <span>Save Operational Rules</span>

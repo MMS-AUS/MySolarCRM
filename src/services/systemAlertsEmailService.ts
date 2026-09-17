@@ -5,14 +5,13 @@ import {
   EmailSendResult,
   EmailDeliveryMode
 } from '../types';
-import { getAccessToken, getConnectedWorkspaceUser } from './googleWorkspace';
 
 const CONFIG_STORAGE_KEY = 'solar_personal_email_config';
 const OUTBOX_STORAGE_KEY = 'solar_outbound_email_ledger';
 
 export const DEFAULT_PERSONAL_EMAIL_CONFIG: PersonalEmailIntegrationConfig = {
-  deliveryMode: 'google_workspace',
-  smtpHost: 'smtp.gmail.com',
+  deliveryMode: 'custom_smtp',
+  smtpHost: 'smtp.mailgun.org',
   smtpPort: 587,
   smtpUsername: '',
   smtpPassword: '',
@@ -20,7 +19,6 @@ export const DEFAULT_PERSONAL_EMAIL_CONFIG: PersonalEmailIntegrationConfig = {
   webhookUrl: '',
   webhookApiKey: '',
   webhookPayloadType: 'resend',
-  customGoogleAccessToken: '',
   senderEmail: '',
   senderName: 'Apex Solar Energy Systems',
   replyToEmail: '',
@@ -45,19 +43,12 @@ export const DEFAULT_PERSONAL_EMAIL_CONFIG: PersonalEmailIntegrationConfig = {
  * Retrieve personal email integration settings
  */
 export const getPersonalEmailConfig = (): PersonalEmailIntegrationConfig => {
-  const connectedUser = getConnectedWorkspaceUser();
-  const activeEmail = connectedUser?.email || '';
-
   try {
     const raw = localStorage.getItem(CONFIG_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       return {
         ...DEFAULT_PERSONAL_EMAIL_CONFIG,
-        senderEmail: activeEmail,
-        replyToEmail: activeEmail,
-        smtpUsername: activeEmail,
-        adminAlertEmails: activeEmail ? [activeEmail] : [],
         ...parsed,
         triggers: {
           ...DEFAULT_PERSONAL_EMAIL_CONFIG.triggers,
@@ -68,13 +59,7 @@ export const getPersonalEmailConfig = (): PersonalEmailIntegrationConfig => {
   } catch (e) {
     console.error('Failed to load personal email config:', e);
   }
-  return {
-    ...DEFAULT_PERSONAL_EMAIL_CONFIG,
-    senderEmail: activeEmail,
-    replyToEmail: activeEmail,
-    smtpUsername: activeEmail,
-    adminAlertEmails: activeEmail ? [activeEmail] : []
-  };
+  return DEFAULT_PERSONAL_EMAIL_CONFIG;
 };
 
 /**
@@ -140,76 +125,11 @@ export const clearOutboundEmailLogs = () => {
 };
 
 /**
- * RFC 2822 & MIME base64url compliant encoder for Gmail REST API
- * Handles all UTF-8 characters, HTML entities, and header standards cleanly
- */
-export function buildRfc822Base64UrlMessage(params: {
-  from: string;
-  to: string | string[];
-  subject: string;
-  bodyHtml: string;
-  cc?: string[];
-  replyTo?: string;
-}): string {
-  const toStr = Array.isArray(params.to) ? params.to.join(', ') : params.to;
-  const ccHeader = params.cc && params.cc.length > 0 ? `Cc: ${params.cc.join(', ')}\r\n` : '';
-  const replyToHeader = params.replyTo ? `Reply-To: ${params.replyTo}\r\n` : '';
-  const dateStr = new Date().toUTCString();
-  const messageId = `<apex-${Date.now()}-${Math.random().toString(36).substring(2, 9)}@solarinstallers.com.au>`;
-
-  // UTF-8 base64 encoding for subject line
-  const subjectBytes = new TextEncoder().encode(params.subject);
-  let binarySubject = '';
-  for (let i = 0; i < subjectBytes.byteLength; i++) {
-    binarySubject += String.fromCharCode(subjectBytes[i]);
-  }
-  const encodedSubject = `=?UTF-8?B?${btoa(binarySubject)}?=`;
-
-  const headers = [
-    `From: ${params.from}`,
-    `To: ${toStr}`,
-    `Date: ${dateStr}`,
-    `Message-ID: ${messageId}`,
-    `Subject: ${encodedSubject}`,
-    `MIME-Version: 1.0`,
-    replyToHeader ? replyToHeader.trim() : null,
-    ccHeader ? ccHeader.trim() : null,
-    `Content-Type: text/html; charset=UTF-8`,
-    `Content-Transfer-Encoding: base64`
-  ]
-    .filter(Boolean)
-    .join('\r\n');
-
-  // UTF-8 base64 body
-  const bodyBytes = new TextEncoder().encode(params.bodyHtml);
-  let binaryBody = '';
-  for (let i = 0; i < bodyBytes.byteLength; i++) {
-    binaryBody += String.fromCharCode(bodyBytes[i]);
-  }
-  const base64Body = btoa(binaryBody);
-  const chunkedBody = base64Body.match(/.{1,76}/g)?.join('\r\n') || base64Body;
-
-  const rawMessage = `${headers}\r\n\r\n${chunkedBody}`;
-
-  // base64url encode the entire raw message for Gmail API
-  const rawBytes = new TextEncoder().encode(rawMessage);
-  let binaryRaw = '';
-  for (let i = 0; i < rawBytes.byteLength; i++) {
-    binaryRaw += String.fromCharCode(rawBytes[i]);
-  }
-  return btoa(binaryRaw)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
-}
-
-/**
  * Universal System Email Sender
  * Supports:
- * 1. Google Workspace Gmail API (OAuth token)
- * 2. Personal Webhook / REST Gateway (Resend, SendGrid, Mailgun, or custom webhook)
- * 3. Custom SMTP Relay / Google App Password
- * 4. High-Fidelity Simulation / Audit Ledger Mode
+ * 1. Personal Webhook / REST Gateway (Resend, SendGrid, Mailgun, or custom webhook)
+ * 2. Custom SMTP Relay
+ * 3. High-Fidelity Simulation / Audit Ledger Mode
  */
 export async function sendSystemEmail(options: {
   to: string | string[];
@@ -223,11 +143,9 @@ export async function sendSystemEmail(options: {
   senderEmail?: string;
 }): Promise<EmailSendResult> {
   const config = getPersonalEmailConfig();
-  const savedWorkspaceUser = getConnectedWorkspaceUser();
-  const token = (await getAccessToken()) || config.customGoogleAccessToken;
 
   const fromName = options.senderName || config.senderName || 'Apex Solar Operations';
-  const fromEmail = options.senderEmail || config.senderEmail || savedWorkspaceUser?.email || 'alerts@apexsolar.com.au';
+  const fromEmail = options.senderEmail || config.senderEmail || 'alerts@apexsolar.com.au';
   const fromHeader = `${fromName} <${fromEmail}>`;
   const toList = Array.isArray(options.to) ? options.to : [options.to];
   const toStr = toList.join(', ');
@@ -248,77 +166,8 @@ export async function sendSystemEmail(options: {
     timestamp
   };
 
-  // 1. Google Workspace Gmail API
-  if (config.deliveryMode === 'google_workspace' || (!config.deliveryMode && token)) {
-    if (token && token.startsWith('ya29.')) {
-      try {
-        const encodedEmail = buildRfc822Base64UrlMessage({
-          from: fromHeader,
-          to: toStr,
-          subject: options.subject,
-          bodyHtml: options.bodyHtml,
-          cc: options.cc,
-          replyTo: config.replyToEmail || fromEmail
-        });
-
-        const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ raw: encodedEmail })
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          result = {
-            success: true,
-            messageId: data.id || `g-${Date.now()}`,
-            threadId: data.threadId,
-            status: 'delivered',
-            channel: 'gmail_api',
-            timestamp
-          };
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          const errMsg = errData.error?.message || `Gmail API returned HTTP ${res.status}: ${res.statusText}`;
-          console.warn('Gmail API delivery failed:', errMsg);
-          result = {
-            success: false,
-            messageId: `g-err-${Date.now()}`,
-            status: 'failed',
-            channel: 'gmail_api',
-            error: errMsg,
-            timestamp
-          };
-        }
-      } catch (err: any) {
-        console.warn('Gmail API request exception:', err);
-        result = {
-          success: false,
-          messageId: `g-err-${Date.now()}`,
-          status: 'failed',
-          channel: 'gmail_api',
-          error: err.message || 'Network error communicating with Gmail API',
-          timestamp
-        };
-      }
-    } else {
-      // No live Google OAuth access token present
-      result = {
-        success: false,
-        messageId: `g-unauth-${Date.now()}`,
-        status: 'failed',
-        channel: 'gmail_api',
-        error: 'Active Google Workspace OAuth authorization required. Please authorize with Google in Integrations -> Launch Hub or switch to Custom SMTP / Webhook.',
-        timestamp
-      };
-    }
-  }
-
-  // 2. Personal Webhook / REST Gateway (e.g. Resend, SendGrid, Mailgun)
-  else if (config.deliveryMode === 'webhook_gateway' && config.webhookUrl) {
+  // 1. Personal Webhook / REST Gateway (e.g. Resend, SendGrid, Mailgun)
+  if (config.deliveryMode === 'webhook_gateway' && config.webhookUrl) {
     try {
       let payload: any = {};
       let headers: Record<string, string> = {
@@ -629,8 +478,7 @@ export function generateSystemEmailHtml(event: SystemAlertEvent): string {
  */
 export async function sendTestEmail(targetEmail: string, customNotes?: string): Promise<EmailSendResult> {
   const config = getPersonalEmailConfig();
-  const connectedUser = getConnectedWorkspaceUser();
-  const effectiveEmail = (targetEmail && targetEmail.trim()) || config.senderEmail || connectedUser?.email || 'admin@solarinstallers.com.au';
+  const effectiveEmail = (targetEmail && targetEmail.trim()) || config.senderEmail || 'admin@solarinstallers.com.au';
   
   const testSubject = `[Live Test Verification] Solar CRM Deliverability Test (${config.deliveryMode.replace('_', ' ').toUpperCase()})`;
   const bodyHtml = `
@@ -663,25 +511,6 @@ export async function sendTestEmail(targetEmail: string, customNotes?: string): 
     bodyHtml,
     category: 'Test Dispatch'
   });
-
-  // Ensure test email is also logged into Google Workspace Sent items for instant verification
-  if (typeof window !== 'undefined') {
-    try {
-      const raw = localStorage.getItem('solar_workspace_sent_emails');
-      const list = raw ? JSON.parse(raw) : [];
-      list.unshift({
-        id: result.messageId,
-        to: effectiveEmail,
-        subject: testSubject,
-        bodySnippet: `Deliverability test verified. Active channel: ${config.deliveryMode}`,
-        senderName: config.senderName || 'Solar Operations',
-        date: 'Just now'
-      });
-      localStorage.setItem('solar_workspace_sent_emails', JSON.stringify(list.slice(0, 50)));
-    } catch {
-      // ignore
-    }
-  }
 
   return result;
 }

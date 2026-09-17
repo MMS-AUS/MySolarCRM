@@ -22,13 +22,15 @@ import {
   Sun,
   Zap,
   Battery,
-  Cpu
+  Cpu,
+  Download
 } from 'lucide-react';
 import { MetaAdsSyncModal } from '../modals/MetaAdsSyncModal';
 import { LeadEditModal } from '../leads/LeadEditModal';
 import { Lead, ViewMode } from '../../types';
 import { ViewModeSwitcher } from '../common/ViewModeSwitcher';
 import { formatAudAccounts } from '../../utils/australianPostcodes';
+import { downloadGoogleSheetLeadFormat } from '../../utils/googleSheetsTemplate';
 
 export const LeadsView: React.FC<{ onNavigateToProjects: () => void }> = ({ onNavigateToProjects }) => {
   const {
@@ -143,6 +145,19 @@ export const LeadsView: React.FC<{ onNavigateToProjects: () => void }> = ({ onNa
         <div className="flex flex-wrap items-center gap-2">
           {/* View Mode Switcher */}
           <ViewModeSwitcher currentMode={viewMode} onModeChange={setViewMode} />
+
+          <button
+            onClick={() => {
+              downloadGoogleSheetLeadFormat();
+              setFeedback('Google Sheet format downloaded. Populate your columns matching this template for seamless sync.');
+              setTimeout(() => setFeedback(null), 5000);
+            }}
+            className="px-3.5 py-1.5 rounded-lg bg-[#1e1e1e] hover:bg-[#262626] text-white border border-[#2d2d2d] text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
+            title="Download the required CSV/Google Sheet format template for connecting leads"
+          >
+            <Download className="w-3.5 h-3.5 text-[#bef264]" />
+            <span>Download Format</span>
+          </button>
 
           <button
             onClick={handleQuickSyncSheet}

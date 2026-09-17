@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Sheet, RefreshCw, CheckCircle2, FileSpreadsheet, ArrowRight, ExternalLink } from 'lucide-react';
+import { Sheet, RefreshCw, CheckCircle2, FileSpreadsheet, ArrowRight, ExternalLink, Download } from 'lucide-react';
+import { downloadGoogleSheetLeadFormat } from '../../utils/googleSheetsTemplate';
 
 interface MetaAdsSyncModalProps {
   isOpen: boolean;
@@ -97,9 +98,17 @@ export const MetaAdsSyncModal: React.FC<MetaAdsSyncModalProps> = ({ isOpen, onCl
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#161616] border-t border-[#262626] flex items-center justify-between">
-          <span className="text-[11px] text-gray-400">Auto-poll frequency: Real-time via Webhook</span>
-          <div className="flex items-center gap-2">
+        <div className="p-4 bg-[#161616] border-t border-[#262626] flex flex-col sm:flex-row items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => downloadGoogleSheetLeadFormat()}
+            className="px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#262626] hover:bg-[#333] text-white border border-[#383838] flex items-center gap-1.5 transition-colors shadow-xs"
+            title="Download CSV template format matching all 23 lead fields"
+          >
+            <Download className="w-3.5 h-3.5 text-[#bef264]" />
+            <span>Download Format Template</span>
+          </button>
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button
               onClick={onClose}
               className="px-4 py-2 rounded-lg text-xs font-medium text-gray-400 hover:bg-[#262626] hover:text-white transition-colors"

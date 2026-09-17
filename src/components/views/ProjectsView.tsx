@@ -20,7 +20,9 @@ import {
   Building2,
   Plus,
   Edit,
-  Sun
+  Sun,
+  Phone,
+  MessageSquare
 } from 'lucide-react';
 import { Project, ProjectStatus, ViewMode } from '../../types';
 import { ViewModeSwitcher } from '../common/ViewModeSwitcher';
@@ -36,7 +38,9 @@ export const ProjectsView: React.FC<{ onNavigateToSection: (sec: any) => void }>
     installOrders,
     systemRules,
     projectsViewMode: viewMode,
-    setProjectsViewMode: setViewMode
+    setProjectsViewMode: setViewMode,
+    setIsVoipDialerOpen,
+    setIsQuickSmsOpen
   } = useApp();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -120,7 +124,7 @@ export const ProjectsView: React.FC<{ onNavigateToSection: (sec: any) => void }>
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
           <button
             onClick={handleOpenNewProject}
-            className="px-3 py-1.5 rounded-lg bg-[#bef264] hover:bg-[#a3e635] text-black font-bold text-xs flex items-center gap-1.5 transition-colors shadow-xs"
+            className="px-3 py-1.5 rounded-lg bg-[#bef264] hover:bg-[#a3e635] text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Project</span>
@@ -252,16 +256,33 @@ export const ProjectsView: React.FC<{ onNavigateToSection: (sec: any) => void }>
 
                         {/* Quick modal launchers */}
                         <div className="flex items-center justify-between gap-1 pt-1 border-t border-[#262626]">
-                          <button
-                            onClick={() => handleOpenEditModal(proj)}
-                            className="text-[10px] text-[#bef264] hover:text-white font-semibold flex items-center gap-1"
-                            title="View/Edit Full Project Details"
-                          >
-                            <Edit className="w-3 h-3" />
-                            <span>Details</span>
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setIsVoipDialerOpen(true)}
+                              className="p-1.5 rounded bg-[#262626] hover:bg-[#333] text-emerald-400 border border-[#333] transition-colors"
+                              title="Call Customer"
+                            >
+                              <Phone className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => setIsQuickSmsOpen(true)}
+                              className="p-1.5 rounded bg-[#262626] hover:bg-[#333] text-amber-400 border border-[#333] transition-colors"
+                              title="SMS Customer"
+                            >
+                              <MessageSquare className="w-3 h-3" />
+                            </button>
+                          </div>
 
                           <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleOpenEditModal(proj)}
+                              className="text-[10px] text-[#bef264] hover:text-white font-semibold flex items-center gap-1"
+                              title="View/Edit Full Project Details"
+                            >
+                              <Edit className="w-3 h-3" />
+                              <span>Details</span>
+                            </button>
+
                             <button
                               onClick={() => setSelectedPreviewProposalUrl(proj.openSolarProposalId)}
                               className="text-[10px] text-orange-400 hover:text-orange-300 font-semibold flex items-center gap-1"
@@ -312,7 +333,7 @@ export const ProjectsView: React.FC<{ onNavigateToSection: (sec: any) => void }>
               <tbody className="divide-y divide-[#262626]">
                 {filteredProjects.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                       No solar projects match your search or filter.
                     </td>
                   </tr>
@@ -387,6 +408,20 @@ export const ProjectsView: React.FC<{ onNavigateToSection: (sec: any) => void }>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setIsVoipDialerOpen(true)}
+                            className="p-1.5 rounded bg-[#262626] hover:bg-[#333] text-emerald-400 border border-[#333] transition-colors"
+                            title="Call Customer"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setIsQuickSmsOpen(true)}
+                            className="p-1.5 rounded bg-[#262626] hover:bg-[#333] text-amber-400 border border-[#333] transition-colors"
+                            title="SMS Customer"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             onClick={() => handleOpenEditModal(proj)}
                             className="p-1.5 rounded bg-[#bef264]/15 hover:bg-[#bef264]/25 text-[#bef264] border border-[#bef264]/30 transition-colors"
@@ -520,6 +555,24 @@ export const ProjectsView: React.FC<{ onNavigateToSection: (sec: any) => void }>
                 {/* Linked Integration Buttons */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#262626]">
                   <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => setIsVoipDialerOpen(true)}
+                      className="px-2.5 py-1.5 rounded-lg bg-[#161616] hover:bg-[#262626] text-emerald-400 border border-[#2d2d2d] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                      title="Call Customer"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Call</span>
+                    </button>
+
+                    <button
+                      onClick={() => setIsQuickSmsOpen(true)}
+                      className="px-2.5 py-1.5 rounded-lg bg-[#161616] hover:bg-[#262626] text-amber-400 border border-[#2d2d2d] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                      title="SMS Customer"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
+                      <span>SMS</span>
+                    </button>
+
                     <button
                       onClick={() => handleOpenEditModal(proj)}
                       className="px-2.5 py-1.5 rounded-lg bg-[#bef264]/15 hover:bg-[#bef264]/25 text-[#bef264] border border-[#bef264]/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"

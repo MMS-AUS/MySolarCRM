@@ -84,7 +84,6 @@ import {
   parseAudAccounts
 } from '../utils/australianPostcodes';
 import { dispatchSystemAlert, getPersonalEmailConfig } from '../services/systemAlertsEmailService';
-import { getConnectedWorkspaceUser, connectDirectWorkspaceAccount } from '../services/googleWorkspace';
 
 interface AppContextType {
   currentUser: UserProfile;
@@ -214,8 +213,7 @@ interface AppContextType {
   awardInstallOrder: (orderId: string, quoteId: string) => void;
 
   customerReviews: CustomerReview[];
-  addCustomerReview: (rev: Omit<CustomerReview, 'id' | 'createdAt' | 'googleMyBusinessSynced' | 'published'>) => void;
-  toggleGmbSync: (id: string) => void;
+  addCustomerReview: (rev: Omit<CustomerReview, 'id' | 'createdAt' | 'published'>) => void;
   togglePublishReview: (id: string) => void;
   addReviewReply: (id: string, reply: string) => void;
 
@@ -336,20 +334,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     setIsAuthenticated(true);
     localStorage.setItem('solar_authenticated', 'true');
-
-    // Automatically connect Google integrations (Gmail, Google Calendar, Google My Business)
-    // using the logged-in user's email credentials without requiring GCP or OAuth popups
-    try {
-      if (targetUser?.email) {
-        connectDirectWorkspaceAccount({
-          email: targetUser.email,
-          displayName: targetUser.name,
-          photoURL: targetUser.avatar
-        });
-      }
-    } catch (err) {
-      console.warn('Auto-connection for Google integrations note:', err);
-    }
   };
 
   const logout = () => {
@@ -436,6 +420,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.warn('Failed to save solar_tickets_view_mode to localStorage', e);
     }
   };
+
+  // One-time production initialization: purge legacy demo/dummy data from browser localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      const PROD_CLEAN_KEY = 'solar_crm_prod_clean_v2';
+      if (!localStorage.getItem(PROD_CLEAN_KEY)) {
+        const demoKeys = [
+          'solar_contacts',
+          'solar_companies',
+          'solar_leads',
+          'solar_projects',
+          'solar_tickets',
+          'solar_maintenance',
+          'solar_subcontractors',
+          'solar_sales_orders',
+          'solar_install_orders',
+          'solar_reviews',
+          'solar_notifications',
+          'solar_sms_messages',
+          'solar_voip_calls',
+          'solar_leave_requests',
+          'solar_referral_bonuses',
+          'solar_xero_invoices',
+          'solar_xero_quotations',
+          'solar_xero_bills',
+          'solar_xero_contacts_sync',
+          'solar_xero_payment_receipts',
+          'solar_opensolar_proposals',
+          'solar_messagemedia_sms_logs',
+          'solar_mailchimp_campaigns',
+          'solar_mailchimp_emails'
+        ];
+        demoKeys.forEach(k => localStorage.removeItem(k));
+        localStorage.setItem(PROD_CLEAN_KEY, 'true');
+      }
+    } catch (e) {
+      console.warn('Could not initialize clean production storage', e);
+    }
+  }
 
   const [contacts, setContacts] = useState<Contact[]>(() => {
     const saved = localStorage.getItem('solar_contacts');
@@ -565,6 +588,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           financeStatuses: parsed.financeStatuses || INITIAL_DROPDOWNS.financeStatuses,
           stcPortals: parsed.stcPortals || INITIAL_DROPDOWNS.stcPortals,
           stcStatuses: parsed.stcStatuses || INITIAL_DROPDOWNS.stcStatuses,
+          ticketIssueRecordedOptions: parsed.ticketIssueRecordedOptions || INITIAL_DROPDOWNS.ticketIssueRecordedOptions,
+          ticketInitialCheckOptions: parsed.ticketInitialCheckOptions || INITIAL_DROPDOWNS.ticketInitialCheckOptions,
+          ticketWorkRequiredOptions: parsed.ticketWorkRequiredOptions || INITIAL_DROPDOWNS.ticketWorkRequiredOptions,
+          ticketIssueResolutionStatuses: parsed.ticketIssueResolutionStatuses || INITIAL_DROPDOWNS.ticketIssueResolutionStatuses,
+          ticketWarrantyClaimStatuses: parsed.ticketWarrantyClaimStatuses || INITIAL_DROPDOWNS.ticketWarrantyClaimStatuses,
+          ticketWarrantyClaimInvoiceStatuses: parsed.ticketWarrantyClaimInvoiceStatuses || INITIAL_DROPDOWNS.ticketWarrantyClaimInvoiceStatuses,
+          ticketBrandNotesPresets: parsed.ticketBrandNotesPresets || INITIAL_DROPDOWNS.ticketBrandNotesPresets,
+          ticketServiceIssueNotesPresets: parsed.ticketServiceIssueNotesPresets || INITIAL_DROPDOWNS.ticketServiceIssueNotesPresets,
+          ticketInstallerNotesPresets: parsed.ticketInstallerNotesPresets || INITIAL_DROPDOWNS.ticketInstallerNotesPresets,
           ebCustomerNameMatchOptions: parsed.ebCustomerNameMatchOptions || INITIAL_DROPDOWNS.ebCustomerNameMatchOptions,
           ebAddressMatchOptions: parsed.ebAddressMatchOptions || INITIAL_DROPDOWNS.ebAddressMatchOptions,
           ebMeterMatchOptions: parsed.ebMeterMatchOptions || INITIAL_DROPDOWNS.ebMeterMatchOptions,
@@ -759,35 +791,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem('solar_user', JSON.stringify(currentUser));
   }, [currentUser]);
-
-  // Auto-connect Google services (Gmail, Calendar, GMB) for the active user session without requiring GCP project / OAuth setup
-  useEffect(() => {
-    const wsUser = getConnectedWorkspaceUser();
-    if (!wsUser?.isConnected && currentUser?.email) {
-      try {
-        connectDirectWorkspaceAccount({
-          email: currentUser.email,
-          displayName: currentUser.name,
-          photoURL: currentUser.avatar
-        });
-      } catch (err) {
-        console.warn('Direct Google auto-connect note:', err);
-      }
-    } else if (wsUser?.isConnected && wsUser.email && currentUser.email !== wsUser.email) {
-      setCurrentUser(prev => ({
-        ...prev,
-        email: wsUser.email,
-        name: wsUser.displayName || prev.name
-      }));
-      setSystemUsers(prevUsers =>
-        prevUsers.map(u =>
-          u.id === currentUser.id
-            ? { ...u, email: wsUser.email, name: wsUser.displayName || u.name }
-            : u
-        )
-      );
-    }
-  }, []);
 
   useEffect(() => {
     localStorage.setItem('solar_contacts', JSON.stringify(contacts));
@@ -2927,22 +2930,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Reviews
   const addCustomerReview = (
-    rev: Omit<CustomerReview, 'id' | 'createdAt' | 'googleMyBusinessSynced' | 'published'>
+    rev: Omit<CustomerReview, 'id' | 'createdAt' | 'published'>
   ) => {
     const newRev: CustomerReview = {
       ...rev,
       id: `rev-${Date.now()}`,
       createdAt: new Date().toISOString().split('T')[0],
-      googleMyBusinessSynced: true,
       published: true
     };
     setCustomerReviews(prev => [newRev, ...prev]);
-  };
-
-  const toggleGmbSync = (id: string) => {
-    setCustomerReviews(prev =>
-      prev.map(r => (r.id === id ? { ...r, googleMyBusinessSynced: !r.googleMyBusinessSynced } : r))
-    );
   };
 
   const togglePublishReview = (id: string) => {
@@ -3223,7 +3219,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ebMeterMatchOptions: 'EB Checklist: Meter Number Match',
     ebMeterPhaseOptions: 'EB Checklist: Meter Phase Confirm',
     ebOpenSolarSystemMatchOptions: 'EB Checklist: OpenSolar System Match',
-    ebOpenSolarPricingMatchOptions: 'EB Checklist: OpenSolar Pricing & STC Match'
+    ebOpenSolarPricingMatchOptions: 'EB Checklist: OpenSolar Pricing & STC Match',
+
+    // Ticket Management Dropdowns
+    ticketIssueRecordedOptions: 'Ticket: Issue Recorded Options',
+    ticketInitialCheckOptions: 'Ticket: Initial Check Options',
+    ticketWorkRequiredOptions: 'Ticket: Work Required Presets',
+    ticketIssueResolutionStatuses: 'Ticket: Issue Resolution Statuses',
+    ticketWarrantyClaimStatuses: 'Ticket: Warranty Claim Statuses',
+    ticketWarrantyClaimInvoiceStatuses: 'Ticket: Warranty Claim Invoice Statuses',
+    ticketBrandNotesPresets: 'Ticket: Brand Notes Presets',
+    ticketServiceIssueNotesPresets: 'Ticket: Service Issue Notes Presets',
+    ticketInstallerNotesPresets: 'Ticket: Installer / Electrician Notes Presets'
   };
 
   const dropdownConfigs: DropdownCategoryConfig[] = Object.keys(dropdownCategoryLabels).map(key => {
@@ -3379,7 +3386,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         customerReviews,
         addCustomerReview,
-        toggleGmbSync,
         togglePublishReview,
         addReviewReply,
 

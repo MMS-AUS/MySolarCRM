@@ -216,7 +216,7 @@ export const SettingsView: React.FC = () => {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold transition-all whitespace-nowrap ${
                 isActive
-                  ? 'bg-[#bef264] text-black font-bold shadow-xs'
+                  ? 'bg-[#bef264] text-slate-950 font-bold shadow-xs'
                   : 'text-gray-400 hover:text-white hover:bg-[#1f1f1f]'
               }`}
             >
@@ -261,7 +261,7 @@ export const SettingsView: React.FC = () => {
                 setNewUserDept('Sales');
                 setIsAddUserModalOpen(true);
               }}
-              className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-black text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 self-start sm:self-auto shadow-xs"
+              className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 self-start sm:self-auto shadow-xs"
             >
               <Plus className="w-4 h-4" />
               <span>Add New User</span>
@@ -297,7 +297,7 @@ export const SettingsView: React.FC = () => {
                       <tr key={user.id} className="hover:bg-[#181818] transition-colors">
                         <td className="p-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-lime-400 to-emerald-500 text-black font-bold flex items-center justify-center text-xs">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-lime-400 to-emerald-500 text-slate-950 font-bold flex items-center justify-center text-xs">
                               {initials}
                             </div>
                             <div>
@@ -450,7 +450,7 @@ export const SettingsView: React.FC = () => {
               />
               <button
                 type="submit"
-                className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-black text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shrink-0"
+                className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shrink-0"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add</span>
@@ -501,7 +501,7 @@ export const SettingsView: React.FC = () => {
               />
               <button
                 type="submit"
-                className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-black text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shrink-0"
+                className="px-4 py-2 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shrink-0"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Domain</span>
@@ -692,7 +692,7 @@ export const SettingsView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-[#bef264] hover:bg-[#a3e635] text-black text-xs font-bold rounded-lg transition-colors"
+                  className="px-4 py-1.5 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 text-xs font-bold rounded-lg transition-colors"
                 >
                   {editingUserId ? 'Save Changes' : 'Create User & Generate Invite'}
                 </button>

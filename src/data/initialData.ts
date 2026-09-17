@@ -49,58 +49,7 @@ export const INITIAL_COMPANY_PROFILE: CompanyProfile = {
   portalBannerUrl: ''
 };
 
-export const INITIAL_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: 'notif-1',
-    title: 'New Inbound Lead',
-    message: 'Sarah Jenkins requested a quote for a 10.4kW AIKO System + Tesla Powerwall 3 in Sydney.',
-    timestamp: '10m ago',
-    type: 'lead',
-    read: false,
-    targetSection: 'leads',
-    targetId: 'lead-1'
-  },
-  {
-    id: 'notif-2',
-    title: 'Project Milestone Reached',
-    message: 'Project SOL-NSW-1042 (Marcus Thorne) completed installation. Ready for BridgeSelect STC claim ($3,920 AUD).',
-    timestamp: '35m ago',
-    type: 'project',
-    read: false,
-    targetSection: 'projects',
-    targetId: 'proj-1'
-  },
-  {
-    id: 'notif-3',
-    title: 'Referral Bonus Approved for EFT',
-    message: 'Referral bonus REF-2026-001 ($500 AUD) for Sarah Jenkins approved. Ready for banking batch release.',
-    timestamp: '2h ago',
-    type: 'referral',
-    read: false,
-    targetSection: 'referrals',
-    targetId: 'ref-1'
-  },
-  {
-    id: 'notif-4',
-    title: 'Support Ticket Urgent Alert',
-    message: 'Inverter Fault (Code 402) submitted by David Wilson for 6.6kW Sungrow system in Brisbane.',
-    timestamp: '4h ago',
-    type: 'ticket',
-    read: false,
-    targetSection: 'tickets',
-    targetId: 'tick-1'
-  },
-  {
-    id: 'notif-5',
-    title: '2-Year Maintenance Due',
-    message: 'System at 14 Carrington Rd, Cronulla NSW is now due for its 24-month CEC checkup.',
-    timestamp: '1d ago',
-    type: 'maintenance',
-    read: true,
-    targetSection: 'maintenance',
-    targetId: 'maint-1'
-  }
-];
+export const INITIAL_NOTIFICATIONS: AppNotification[] = [];
 
 export const INITIAL_ACCESS_ROLES: RoleAccessConfig[] = [
   {
@@ -474,6 +423,94 @@ export const INITIAL_DROPDOWNS: DynamicDropdownConfig = {
     'Approved & Traded',
     'Audit Flagged',
     'Paid'
+  ],
+  ticketIssueRecordedOptions: [
+    'Inverter Fault / Red Alarm Light',
+    'No Generation / Zero Daily Yield',
+    'Error Code (e.g. Ground Fault / Isolation Error)',
+    'Battery Discharging Failure / Offline',
+    'Monitoring Dongle Offline / Wi-Fi Drop',
+    'Solar System Tripping Circuit Breaker',
+    'Panel Hotspot / Visible Damage',
+    'Roof Leak Near Solar Brackets',
+    'Smart Meter Interval Misalignment',
+    'Physical Damage / Storm Impact'
+  ],
+  ticketInitialCheckOptions: [
+    'Remote Portal Telemetry Verification',
+    'DC Isolator Check (Passed)',
+    'AC Main Switch Check (Passed)',
+    'Inverter Error Code Diagnostic Run',
+    'Battery State of Charge (SoC) Inspection',
+    'Grid Overvoltage Tripping Check',
+    'Wi-Fi RSSI Signal Check',
+    'Customer Troubleshooting Guided via Phone',
+    'Physical On-Site Inspection Required',
+    'Pending Initial Field Dispatch'
+  ],
+  ticketWorkRequiredOptions: [
+    'Inverter Replacement under Manufacturer Warranty',
+    'Firmware Upgrade & Inverter Re-commissioning',
+    'Replace Faulty DC Isolator / Rewire Cable',
+    'Panel Replacement & Recalibration',
+    'Wi-Fi Dongle Replacement & Setup',
+    'Battery Module Swap / BMS Reset',
+    'Switchboard RCD / Circuit Breaker Upgrade',
+    'Roof Flashing & Sealant Rectification',
+    'Re-torque Solar Clamps & Rail Grounding',
+    'General System Health Check & Clean'
+  ],
+  ticketIssueResolutionStatuses: [
+    'Under Investigation',
+    'Troubleshooting in Progress',
+    'Warranty Claim Logged with Brand',
+    'Awaiting Replacement Hardware',
+    'Technician Dispatched',
+    'On-Site Work Completed',
+    'Monitoring Stable & Verified',
+    'Resolved - Complete Handover',
+    'Claim Denied by Manufacturer',
+    'Customer Closed'
+  ],
+  ticketWarrantyClaimStatuses: [
+    'Not Applicable',
+    'Draft Claim',
+    'Submitted to Manufacturer',
+    'RMA (Return Merchandise Auth) Issued',
+    'Replacement Dispatched by Brand',
+    'Replacement Received & Tested',
+    'Warranty Approved & Credited',
+    'Warranty Rejected / Out of Scope'
+  ],
+  ticketWarrantyClaimInvoiceStatuses: [
+    'Pending Claim Review',
+    'Claim Approved - Awaiting Credit',
+    'Manufacturer Rebate Received',
+    'Invoice Paid',
+    'No Charge / Full Warranty Replacement',
+    'Disputed with Brand'
+  ],
+  ticketBrandNotesPresets: [
+    'Claim submitted via Sungrow Service Portal. RMA number pending review.',
+    'Tesla Energy case logged. Certified Powerwall technician dispatch requested.',
+    'Fronius SOS portal warranty claim approved. Replacement unit shipped from Melbourne warehouse.',
+    'AIKO Solar technical support verified cell defect from electroluminescence photos.',
+    'Enphase Enlighten warranty swap approved. RMA tracking provided.',
+    'Sigenergy automated diagnostics uploaded to cloud support desk.'
+  ],
+  ticketServiceIssueNotesPresets: [
+    'Customer noted inverter alarm started after weekend lightning storm.',
+    'Zero kWh generation verified on smart meter for 3 consecutive days.',
+    'Isolation resistance fault detected during early morning dew.',
+    'Monitoring app disconnected following NBN router upgrade; 2.4GHz network required.',
+    'Battery discharging stopped at 20% SoC; firmware recalibration recommended.'
+  ],
+  ticketInstallerNotesPresets: [
+    'Licensed CEC electrician attended site; tested DC voltage and found open circuit string 2.',
+    'Replaced faulty inverter under warranty; completed full commissioning and zero export test.',
+    'Installed replacement 440W panel, verified Voc and Isc, re-tested earth continuity.',
+    'Fixed loose Wi-Fi antenna connection; confirmed cloud sync active on Sungrow iSolarCloud.',
+    'Checked roof penetration points; applied Sikaflex waterproof sealant and re-flashed bracket.'
   ]
 };
 
@@ -580,1192 +617,40 @@ export const INITIAL_PORTAL_ADDRESSES: SystemPortalAddresses = {
   enableAutoRouting: true
 };
 
-export const INITIAL_COMPANIES: Company[] = [
-  {
-    id: 'comp-1',
-    name: 'Apex Solar Installations NSW',
-    abn: '54 621 890 123',
-    type: 'Subcontractor Installer',
-    state: 'NSW',
-    city: 'Sydney (Wetherill Park)',
-    phone: '+61 2 9604 1122',
-    email: 'dispatch@apexsolarnsw.com.au',
-    contactPerson: 'David Miller (CEC Accredited)',
-    cecAccredited: true,
-    activeProjectsCount: 3
-  },
-  {
-    id: 'comp-2',
-    name: 'Gold Coast SunPower Tech QLD',
-    abn: '32 984 105 776',
-    type: 'Subcontractor Installer',
-    state: 'QLD',
-    city: 'Gold Coast (Nerang)',
-    phone: '+61 7 5596 3344',
-    email: 'admin@sunpowertech.com.au',
-    contactPerson: 'Liam O’Connor (SAA Designer & Installer)',
-    cecAccredited: true,
-    activeProjectsCount: 2
-  },
-  {
-    id: 'comp-3',
-    name: 'Krannich Solar Wholesale AU',
-    abn: '89 123 456 789',
-    type: 'Equipment Vendor',
-    state: 'NSW',
-    city: 'Sydney (Eastern Creek)',
-    phone: '+61 2 8888 7700',
-    email: 'orders.nsw@krannich-solar.com',
-    contactPerson: 'Sarah Jenkins',
-    activeProjectsCount: 0
-  },
-  {
-    id: 'comp-4',
-    name: 'Harbour Logistics Commercial Centre',
-    abn: '41 902 334 112',
-    type: 'Commercial Customer',
-    state: 'NSW',
-    city: 'Port Botany',
-    phone: '+61 2 9316 4400',
-    email: 'facilities@harbourlogistics.com.au',
-    contactPerson: 'Geoff Howard',
-    creditLimit: 150000,
-    activeProjectsCount: 1
-  }
-];
+export const INITIAL_COMPANIES: Company[] = [];
 
-export const INITIAL_CONTACTS: Contact[] = [
-  {
-    id: 'cnt-1',
-    name: 'Harrison Davies',
-    email: 'harrison.davies@gmail.com',
-    phone: '+61 411 234 567',
-    state: 'NSW',
-    city: 'Strathfield, Sydney',
-    address: '42 Albert Road, Strathfield NSW 2135',
-    addresses: [
-      {
-        id: 'addr-cnt-1-1',
-        street: '42 Albert Road',
-        suburb: 'Strathfield',
-        state: 'NSW',
-        postcode: '2135',
-        propertyType: 'Primary Residence',
-        systemSizeKw: 10.4,
-        notes: 'Single storey colorbond, high air-con power bill. 10.4kW + Sungrow battery.',
-        isPrimary: true
-      },
-      {
-        id: 'addr-cnt-1-2',
-        street: '18 Ocean Parade',
-        suburb: 'Manly',
-        state: 'NSW',
-        postcode: '2095',
-        propertyType: 'Investment Property',
-        systemSizeKw: 6.6,
-        notes: 'Beachside holiday rental duplex. Two-storey tile roof.',
-        isPrimary: false
-      }
-    ],
-    type: 'Residential',
-    source: 'Meta Ads',
-    openSolarContactId: 'OS-CNT-901',
-    assignedVoipLineNumber: '+61 2 8311 4920',
-    notes: 'Single storey colorbond, high air-con quarterly bill ($1,250), looking for 10.4kW + Sungrow battery.',
-    createdAt: '2026-07-12',
-    lastContactedAt: '2026-09-02'
-  },
-  {
-    id: 'cnt-2',
-    name: 'Brooke Henderson',
-    email: 'brooke.h@outlook.com',
-    phone: '+61 422 789 331',
-    state: 'QLD',
-    city: 'Chermside, Brisbane',
-    address: '18 Gympie Street, Chermside QLD 4032',
-    addresses: [
-      {
-        id: 'addr-cnt-2-1',
-        street: '18 Gympie Street',
-        suburb: 'Chermside',
-        state: 'QLD',
-        postcode: '4032',
-        propertyType: 'Primary Residence',
-        systemSizeKw: 6.6,
-        notes: 'Two-storey terracotta tile roof. Completed install in 2024.',
-        isPrimary: true
-      },
-      {
-        id: 'addr-cnt-2-2',
-        street: '74 Sunshine Boulevard',
-        suburb: 'Broadbeach Waters',
-        state: 'QLD',
-        postcode: '4218',
-        propertyType: 'Holiday Home',
-        systemSizeKw: 8.8,
-        notes: 'Canal waterfront property. Metal sheet roof.',
-        isPrimary: false
-      }
-    ],
-    type: 'Residential',
-    source: 'OpenSolar',
-    openSolarContactId: 'OS-CNT-904',
-    assignedVoipLineNumber: '+61 7 3184 8921',
-    notes: 'Two-storey terracotta tile roof. Needs CEC certified installer with tile safety kit. Completed install in 2024.',
-    createdAt: '2024-08-15',
-    lastContactedAt: '2026-08-28'
-  },
-  {
-    id: 'cnt-3',
-    name: 'Marcus Sterling',
-    email: 'm.sterling@sterlingdistributors.com.au',
-    phone: '+61 433 912 445',
-    state: 'NSW',
-    city: 'Parramatta, Sydney',
-    address: '120 George St, Parramatta NSW 2150',
-    addresses: [
-      {
-        id: 'addr-cnt-3-1',
-        street: '120 George St',
-        suburb: 'Parramatta',
-        state: 'NSW',
-        postcode: '2150',
-        propertyType: 'Commercial Facility',
-        systemSizeKw: 39.6,
-        notes: 'Commercial rooftop solar system with 3-Phase Ausgrid connection.',
-        isPrimary: true
-      },
-      {
-        id: 'addr-cnt-3-2',
-        street: 'Unit 4, 88 Industrial Drive',
-        suburb: 'Wetherill Park',
-        state: 'NSW',
-        postcode: '2164',
-        propertyType: 'Commercial Warehouse',
-        systemSizeKw: 50.0,
-        notes: 'Heavy machinery logistics distribution warehouse.',
-        isPrimary: false
-      }
-    ],
-    type: 'Commercial',
-    companyId: 'comp-4',
-    companyName: 'Harbour Logistics Commercial Centre',
-    source: 'Gmail Sync',
-    assignedVoipLineNumber: '+61 2 8311 4920',
-    notes: '39.6kW commercial rooftop solar system. 3-Phase with Ausgrid high voltage connection.',
-    createdAt: '2026-06-05',
-    lastContactedAt: '2026-09-01'
-  },
-  {
-    id: 'cnt-4',
-    name: 'David Miller',
-    email: 'dispatch@apexsolarnsw.com.au',
-    phone: '+61 450 123 456',
-    state: 'NSW',
-    city: 'Sydney',
-    address: '14 Newton Rd, Wetherill Park NSW 2164',
-    addresses: [
-      {
-        id: 'addr-cnt-4-1',
-        street: '14 Newton Rd',
-        suburb: 'Wetherill Park',
-        state: 'NSW',
-        postcode: '2164',
-        propertyType: 'Commercial Facility',
-        isPrimary: true
-      }
-    ],
-    type: 'Subcontractor',
-    companyId: 'comp-1',
-    companyName: 'Apex Solar Installations NSW',
-    source: 'Manual',
-    assignedVoipLineNumber: '+61 2 8311 4922',
-    notes: 'Subcontractor lead installer. CEC Accreditation #A8921034.',
-    createdAt: '2025-01-10'
-  },
-  {
-    id: 'cnt-5',
-    name: 'Nathaniel Ward',
-    email: 'nathaniel.ward@gmail.com',
-    phone: '+61 401 555 123',
-    state: 'NSW',
-    city: 'Castle Hill, Sydney',
-    address: '88 Old Northern Road, Castle Hill NSW 2154',
-    addresses: [
-      {
-        id: 'addr-cnt-5-1',
-        street: '88 Old Northern Road',
-        suburb: 'Castle Hill',
-        state: 'NSW',
-        postcode: '2154',
-        propertyType: 'Primary Residence',
-        systemSizeKw: 13.2,
-        notes: 'Two-storey concrete tile roof. 13.2kW Solar + Tesla Powerwall 3.',
-        isPrimary: true
-      },
-      {
-        id: 'addr-cnt-5-2',
-        street: '14 Figtree Pocket Road',
-        suburb: 'Indooroopilly',
-        state: 'QLD',
-        postcode: '4068',
-        propertyType: 'Investment Property',
-        systemSizeKw: 9.6,
-        notes: 'Brisbane riverfront rental property. Single-storey metal roof.',
-        isPrimary: false
-      }
-    ],
-    type: 'Residential',
-    source: 'Meta Ads',
-    openSolarContactId: 'OS-CNT-905',
-    assignedVoipLineNumber: '+61 2 8311 4920',
-    notes: 'Referred by Harrison Davies. Premium residential package with battery.',
-    createdAt: '2026-08-28',
-    lastContactedAt: '2026-09-02'
-  }
-];
+export const INITIAL_CONTACTS: Contact[] = [];
 
-export const INITIAL_LEADS: Lead[] = [
-  {
-    id: 'lead-101',
-    leadDate: '2026-08-30',
-    platform: 'Meta Lead Ads (Facebook/Instagram)',
-    salesPersonName: 'Mitchell Barnes',
-    state: 'NSW',
-    postcode: '2154',
-    area: 'Metro',
-    nearestBigCity: 'Sydney',
-    status: 'Proposal Sent',
-    saleDate: '',
-    firstName: 'Nathaniel',
-    lastName: 'Ward',
-    managerRenteeFirstName: '',
-    managerRenteeLastName: '',
-    address: '12 Castle Street',
-    suburb: 'Castle Hill',
-    addressVerified: true,
-    primaryMobile: '0401 555 123',
-    secondaryMobile: '0402 111 888',
-    email: 'nathaniel.ward@gmail.com, nathan.work@solargroup.com.au',
-    salesTeamNotes: 'Interested in 13.2kW AIKO system with Tesla Powerwall 3. Customer wants proposal revised before Friday.',
-    systemPrice: 15400,
-    sellingPrice: 11900,
-    deposit: 1000,
-    depositReceivedDate: '',
-    customerName: 'Nathaniel Ward',
-    phone: '0401 555 123',
-    systemSizeKw: 13.2,
-    batteryRequired: true,
-    propertyType: 'Residential Two-Storey',
-    roofType: 'Concrete Tile',
-    phaseType: 'Three Phase',
-    quarterlyBillAud: 1450,
-    source: 'Meta Lead Ads (Facebook/Instagram)',
-    sheetSyncRowId: 'GSHEET_ROW_42',
-    createdAt: '2026-08-30',
-    assignedTo: 'Mitchell Barnes',
-    attachments: [
-      {
-        id: 'att-101-1',
-        name: 'Electricity_Bill_Q2_2026.pdf',
-        sizeBytes: 1420000,
-        uploadedAt: '2026-08-31T09:15:00.000Z',
-        uploadedBy: 'staff',
-        category: 'Electricity Bill',
-        notes: 'Ausgrid quarterly bill showing 32 kWh/day average consumption.'
-      },
-      {
-        id: 'att-101-2',
-        name: 'Switchboard_Main_Breakers.jpg',
-        sizeBytes: 2840000,
-        uploadedAt: '2026-08-31T09:20:00.000Z',
-        uploadedBy: 'staff',
-        category: 'Switchboard Photo',
-        notes: 'Clear image of meter and main isolation switch.'
-      }
-    ]
-  },
-  {
-    id: 'lead-102',
-    leadDate: '2026-09-01',
-    platform: 'Meta Lead Ads (Facebook/Instagram)',
-    salesPersonName: 'Chloe Gallagher',
-    state: 'QLD',
-    postcode: '4109',
-    area: 'Metro',
-    nearestBigCity: 'Brisbane',
-    status: 'Site Survey Scheduled',
-    saleDate: '',
-    firstName: 'Sophie',
-    lastName: 'Zhang',
-    managerRenteeFirstName: 'Daniel',
-    managerRenteeLastName: 'Zhang',
-    address: '35 Mains Road',
-    suburb: 'Sunnybank',
-    addressVerified: true,
-    primaryMobile: '0412 667 889',
-    secondaryMobile: '',
-    email: 'sophie.zhang@hotmail.com',
-    salesTeamNotes: 'Eligible for QLD battery rebate. Confirmed site survey scheduled for tomorrow 10am.',
-    systemPrice: 12800,
-    sellingPrice: 9400,
-    deposit: 500,
-    depositReceivedDate: '',
-    customerName: 'Sophie Zhang',
-    phone: '0412 667 889',
-    systemSizeKw: 10.4,
-    batteryRequired: true,
-    propertyType: 'Residential Single-Storey',
-    roofType: 'Colorbond / Metal Sheet',
-    phaseType: 'Single Phase',
-    quarterlyBillAud: 980,
-    source: 'Meta Lead Ads (Facebook/Instagram)',
-    sheetSyncRowId: 'GSHEET_ROW_43',
-    createdAt: '2026-09-01',
-    assignedTo: 'Chloe Gallagher'
-  },
-  {
-    id: 'lead-103',
-    leadDate: '2026-09-03',
-    platform: 'Google Search & PMax Ads',
-    salesPersonName: 'Mitchell Barnes',
-    state: 'NSW',
-    postcode: '2300',
-    area: 'Regional',
-    nearestBigCity: 'Newcastle',
-    status: 'New',
-    saleDate: '',
-    firstName: 'Brad',
-    lastName: 'O’Halloran',
-    managerRenteeFirstName: '',
-    managerRenteeLastName: '',
-    address: '105 Hunter Street',
-    suburb: 'Newcastle East',
-    addressVerified: true,
-    primaryMobile: '0423 778 990',
-    secondaryMobile: '0423 112 334',
-    email: 'brad.ohalloran@yahoo.com.au',
-    salesTeamNotes: 'Inbound organic Google search enquiry. Requested callback after 5:30 PM.',
-    systemPrice: 8900,
-    sellingPrice: 6200,
-    deposit: 0,
-    depositReceivedDate: '',
-    customerName: 'Brad O’Halloran',
-    phone: '0423 778 990',
-    systemSizeKw: 6.6,
-    batteryRequired: false,
-    propertyType: 'Residential Single-Storey',
-    roofType: 'Terracotta Tile',
-    phaseType: 'Single Phase',
-    quarterlyBillAud: 650,
-    source: 'Google Search & PMax Ads',
-    sheetSyncRowId: 'GSHEET_ROW_44',
-    createdAt: '2026-09-03',
-    assignedTo: 'Mitchell Barnes'
-  },
-  {
-    id: 'lead-104',
-    leadDate: '2026-09-02',
-    platform: 'Meta Lead Ads (Facebook/Instagram)',
-    salesPersonName: 'Mitchell Barnes',
-    state: 'NSW',
-    postcode: '2153',
-    area: 'Metro',
-    nearestBigCity: 'Sydney',
-    status: 'Contract Signed',
-    saleDate: '2026-09-02',
-    firstName: 'Matthew',
-    lastName: 'Barnes',
-    managerRenteeFirstName: '',
-    managerRenteeLastName: '',
-    address: '42 Windmill Avenue',
-    suburb: 'Baulkham Hills',
-    addressVerified: true,
-    primaryMobile: '0421 987 654',
-    secondaryMobile: '0421 333 222',
-    email: 'matthew.b@outlook.com',
-    salesTeamNotes: 'Contract signed for 10.4kW AIKO Neostar with 10kWh Battery storage. Customer requested immediate portal access to upload documents.',
-    systemPrice: 13500,
-    sellingPrice: 10400,
-    deposit: 1000,
-    depositReceivedDate: '09/02/2026',
-    customerName: 'Matthew Barnes',
-    phone: '0421 987 654',
-    systemSizeKw: 10.4,
-    batteryRequired: true,
-    propertyType: 'Residential Two-Storey',
-    roofType: 'Concrete Tile',
-    phaseType: 'Single Phase',
-    quarterlyBillAud: 1120,
-    source: 'Meta Lead Ads (Facebook/Instagram)',
-    sheetSyncRowId: 'GSHEET_ROW_45',
-    createdAt: '2026-09-02',
-    assignedTo: 'Mitchell Barnes',
-    attachments: [
-      {
-        id: 'att-104-1',
-        name: 'Signed_Solar_Installation_Contract_Barnes.pdf',
-        sizeBytes: 1850000,
-        uploadedAt: '2026-09-02T11:00:00.000Z',
-        uploadedBy: 'staff',
-        category: 'Contract',
-        notes: 'Executed solar supply & installation contract with customer digital signature.'
-      },
-      {
-        id: 'att-104-2',
-        name: 'Customer_Electricity_Bill_Latest.pdf',
-        sizeBytes: 1120000,
-        uploadedAt: '2026-09-02T14:20:00.000Z',
-        uploadedBy: 'customer',
-        category: 'Electricity Bill',
-        notes: 'Uploaded by Matthew Barnes via Customer Portal self-service.'
-      }
-    ],
-    portalCredentials: {
-      username: 'matthew.b@outlook.com',
-      tempPassword: 'Solar-2026!Barnes#842',
-      generatedAt: '2026-09-02T11:05:00.000Z',
-      inviteSentAt: '2026-09-02T11:05:30.000Z',
-      inviteLink: 'https://customer.mysolarcrm.com.au?auth_user=matthew.b%40outlook.com',
-      status: 'Credentials Sent'
-    },
-    xeroInvoiceId: 'xinv-1',
-    xeroInvoiceNumber: 'INV-2026-0041',
-    xeroInvoiceTotal: 10400,
-    xeroInvoiceStatus: 'AUTHORISED',
-    xeroReceiptNumber: 'REC-2026-1042',
-    xeroReceiptDate: '2026-09-02',
-    xeroReceiptAmount: 1000,
-    xeroReceiptMethod: 'Direct Debit / EFT'
-  }
-];
+export const INITIAL_LEADS: Lead[] = [];
 
-export const INITIAL_SUBCONTRACTORS: SubContractor[] = [
-  {
-    id: 'sub-1',
-    name: 'David Miller',
-    companyName: 'Apex Solar Installations NSW',
-    abn: '54 621 890 123',
-    phone: '+61 450 123 456',
-    email: 'dispatch@apexsolarnsw.com.au',
-    state: 'NSW',
-    metroAreas: ['Sydney Metro', 'Wollongong', 'Central Coast', 'Newcastle'],
-    cecAccreditationNumber: 'CEC-A8921034',
-    saaLicenseNumber: 'SAA-NSW-44120',
-    insuranceExpiryDate: '2027-04-30',
-    rating: 4.9,
-    completedInstalls: 142,
-    activeJobsCount: 3,
-    complianceVerified: true
-  },
-  {
-    id: 'sub-2',
-    name: 'Liam O’Connor',
-    companyName: 'Gold Coast SunPower Tech QLD',
-    abn: '32 984 105 776',
-    phone: '+61 460 789 012',
-    email: 'admin@sunpowertech.com.au',
-    state: 'QLD',
-    metroAreas: ['Brisbane Metro', 'Gold Coast', 'Sunshine Coast', 'Ipswich'],
-    cecAccreditationNumber: 'CEC-B7129841',
-    saaLicenseNumber: 'SAA-QLD-88210',
-    insuranceExpiryDate: '2027-02-15',
-    rating: 4.8,
-    completedInstalls: 98,
-    activeJobsCount: 2,
-    complianceVerified: true
-  },
-  {
-    id: 'sub-3',
-    name: 'Craig Thornton',
-    companyName: 'Metro Pro Solar Crew Sydney',
-    abn: '77 411 902 334',
-    phone: '+61 470 334 556',
-    email: 'craig@metroprosolar.com.au',
-    state: 'NSW',
-    metroAreas: ['Sydney Metro', 'Western Sydney'],
-    cecAccreditationNumber: 'CEC-A6049182',
-    saaLicenseNumber: 'SAA-NSW-31998',
-    insuranceExpiryDate: '2026-11-30',
-    rating: 4.7,
-    completedInstalls: 64,
-    activeJobsCount: 1,
-    complianceVerified: true
-  }
-];
+export const INITIAL_SUBCONTRACTORS: SubContractor[] = [];
 
-export const INITIAL_PROJECTS: Project[] = [
-  {
-    id: 'proj-1',
-    projectCode: 'SOL-NSW-1042',
-    title: '10.4kW AIKO + Sungrow Hybrid System',
-    customerId: 'cnt-1',
-    customerName: 'Harrison Davies',
-    customerEmail: 'harrison.davies@gmail.com',
-    customerPhone: '+61 411 234 567',
-    address: '42 Albert Road',
-    suburb: 'Strathfield, Sydney',
-    state: 'NSW',
-    dnsp: 'Ausgrid',
-    status: 'Installation Completed',
-    systemSizeKw: 10.4,
-    panelBrand: 'AIKO Solar',
-    panelModel: 'Neostar 2P 440W All-Black N-Type ABC',
-    panelCount: 24,
-    inverterBrand: 'Sungrow (SG/SH Series)',
-    inverterModel: 'SH8.0RS Hybrid Inverter 8.0kW',
-    batteryBrand: 'Sungrow SBR Battery (9.6kWh - 19.2kWh)',
-    batteryCapacityKwh: 9.6,
-    contractValueAud: 14850,
-    stcCount: 102,
-    customerStcRateAud: 36.00,
-    customerStcValueAud: 3672,
-    internalStcRateAud: 39.50,
-    internalStcValueAud: 4029,
-    stcValueAud: 4029,
-    bridgeSelectStatus: 'Submitted to Clean Energy Regulator',
-    openSolarProposalId: 'OS-PROP-2026-88',
-    openSolarSignedUrl: 'https://opensolar.com/proposals/au/882190-signed.pdf',
-    openSolarContractSigned: true,
-    salesOrderId: 'so-101',
-    installOrderId: 'io-101',
-    subcontractorId: 'sub-1',
-    subcontractorName: 'Apex Solar Installations NSW',
-    installerQuotedAud: 2850,
-    installationDate: '2026-08-25',
-    specsDocumentUrl: 'https://files.aussolar.com.au/specs/SOL-NSW-1042-specs.pdf',
-    sitePlanUrl: 'https://files.aussolar.com.au/plans/SOL-NSW-1042-roofplan.pdf',
-    installedPhotos: [
-      {
-        id: 'p-1',
-        category: 'Array / Panels',
-        url: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop&q=80',
-        uploadedAt: '2026-08-25T14:30:00Z',
-        verified: true
-      },
-      {
-        id: 'p-2',
-        category: 'Inverter & Isolators',
-        url: 'https://images.unsplash.com/photo-1548611716-ad38e7e1f400?w=600&auto=format&fit=crop&q=80',
-        uploadedAt: '2026-08-25T15:10:00Z',
-        verified: true
-      },
-      {
-        id: 'p-3',
-        category: 'Switchboard',
-        url: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&auto=format&fit=crop&q=80',
-        uploadedAt: '2026-08-25T15:45:00Z',
-        verified: true
-      }
-    ]
-  },
-  {
-    id: 'proj-2',
-    projectCode: 'SOL-QLD-0891',
-    title: '13.2kW Jinko + Tesla Powerwall 3',
-    customerId: 'cnt-2',
-    customerName: 'Brooke Henderson',
-    customerEmail: 'brooke.h@outlook.com',
-    customerPhone: '+61 422 789 331',
-    address: '18 Gympie Street',
-    suburb: 'Chermside, Brisbane',
-    state: 'QLD',
-    dnsp: 'Energex',
-    status: 'Completed',
-    systemSizeKw: 13.2,
-    panelBrand: 'Jinko Solar (Tiger Neo)',
-    panelModel: 'Tiger Neo N-type 440W',
-    panelCount: 30,
-    inverterBrand: 'Tesla Powerwall 3 (13.5kWh)',
-    inverterModel: 'Tesla Powerwall 3 Integrated 11.5kW Inverter',
-    batteryBrand: 'Tesla Powerwall 3 (13.5kWh)',
-    batteryCapacityKwh: 13.5,
-    contractValueAud: 22400,
-    stcCount: 140,
-    customerStcRateAud: 36.00,
-    customerStcValueAud: 5040,
-    internalStcRateAud: 39.50,
-    internalStcValueAud: 5530,
-    stcValueAud: 5530,
-    bridgeSelectStatus: 'STCs Approved & Paid',
-    openSolarProposalId: 'OS-PROP-2024-41',
-    openSolarSignedUrl: 'https://opensolar.com/proposals/au/410982-signed.pdf',
-    openSolarContractSigned: true,
-    salesOrderId: 'so-102',
-    installOrderId: 'io-102',
-    subcontractorId: 'sub-2',
-    subcontractorName: 'Gold Coast SunPower Tech QLD',
-    installerQuotedAud: 3400,
-    installationDate: '2024-08-20',
-    completedDate: '2024-09-01',
-    specsDocumentUrl: 'https://files.aussolar.com.au/specs/SOL-QLD-0891-specs.pdf',
-    sitePlanUrl: 'https://files.aussolar.com.au/plans/SOL-QLD-0891-roofplan.pdf',
-    installedPhotos: [
-      {
-        id: 'p-4',
-        category: 'Array / Panels',
-        url: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?w=600&auto=format&fit=crop&q=80',
-        uploadedAt: '2024-08-20T16:00:00Z',
-        verified: true
-      }
-    ]
-  },
-  {
-    id: 'proj-3',
-    projectCode: 'SOL-NSW-1055',
-    title: '39.6kW Commercial Solar Logistics Hub',
-    customerId: 'cnt-3',
-    customerName: 'Marcus Sterling',
-    customerEmail: 'm.sterling@sterlingdistributors.com.au',
-    customerPhone: '+61 433 912 445',
-    address: '120 George St',
-    suburb: 'Parramatta, Sydney',
-    state: 'NSW',
-    dnsp: 'Ausgrid',
-    status: 'Install Scheduled',
-    systemSizeKw: 39.6,
-    panelBrand: 'Trina Solar (Vertex S+)',
-    panelModel: 'Vertex S+ 440W Glass-Glass Dual Glass',
-    panelCount: 90,
-    inverterBrand: 'Fronius (Primo/Symo Gen24)',
-    inverterModel: 'Fronius Symo 20.0-3-M Commercial (x2)',
-    contractValueAud: 44900,
-    stcCount: 390,
-    customerStcRateAud: 36.00,
-    customerStcValueAud: 14040,
-    internalStcRateAud: 39.50,
-    internalStcValueAud: 15405,
-    stcValueAud: 15405,
-    bridgeSelectStatus: 'CEC Accredited Checked',
-    openSolarProposalId: 'OS-PROP-2026-99',
-    openSolarSignedUrl: 'https://opensolar.com/proposals/au/990142-signed.pdf',
-    openSolarContractSigned: true,
-    salesOrderId: 'so-103',
-    installOrderId: 'io-103',
-    subcontractorId: 'sub-1',
-    subcontractorName: 'Apex Solar Installations NSW',
-    installerQuotedAud: 7800,
-    installationDate: '2026-09-15',
-    specsDocumentUrl: 'https://files.aussolar.com.au/specs/SOL-NSW-1055-specs.pdf',
-    sitePlanUrl: 'https://files.aussolar.com.au/plans/SOL-NSW-1055-roofplan.pdf'
-  },
-  {
-    id: 'proj-4',
-    projectCode: 'SOL-NSW-1060',
-    title: '6.6kW Budget Residential Solar',
-    customerId: 'cnt-1',
-    customerName: 'Nathaniel Ward',
-    customerEmail: 'nathaniel.ward@gmail.com',
-    customerPhone: '+61 401 555 123',
-    address: '15 Old Northern Rd',
-    suburb: 'Castle Hill, Sydney',
-    state: 'NSW',
-    dnsp: 'Endeavour Energy',
-    status: 'RFQ Sent to Installers',
-    systemSizeKw: 6.6,
-    panelBrand: 'Canadian Solar',
-    panelModel: 'HiKu6 Mono 415W',
-    panelCount: 16,
-    inverterBrand: 'Sungrow (SG/SH Series)',
-    inverterModel: 'SG5.0RS Single Phase 5.0kW',
-    contractValueAud: 6990,
-    stcCount: 65,
-    customerStcRateAud: 36.00,
-    customerStcValueAud: 2340,
-    internalStcRateAud: 39.50,
-    internalStcValueAud: 2567,
-    stcValueAud: 2567,
-    bridgeSelectStatus: 'Pending Verification',
-    openSolarProposalId: 'OS-PROP-2026-104',
-    openSolarContractSigned: true,
-    salesOrderId: 'so-104',
-    installOrderId: 'io-104',
-    specsDocumentUrl: 'https://files.aussolar.com.au/specs/SOL-NSW-1060-specs.pdf'
-  }
-];
+export const INITIAL_PROJECTS: Project[] = [];
 
-export const INITIAL_TICKETS: Ticket[] = [
-  {
-    id: 'tkt-1',
-    ticketNumber: 'TKT-2026-042',
-    projectId: 'proj-2',
-    projectCode: 'SOL-QLD-0891',
-    customerId: 'cnt-2',
-    customerName: 'Brooke Henderson',
-    customerPhone: '+61 422 789 331',
-    title: 'Tesla App showing Gateway WiFi Disconnect',
-    description: 'After NBN router reboot last evening, the Tesla Powerwall 3 gateway LED is flashing amber and real-time generation is not updating in our app.',
-    category: 'WiFi Monitoring Drop',
-    priority: 'Medium',
-    status: 'In Progress',
-    createdAt: '2026-09-02T08:15:00Z',
-    assignedTechnician: 'Liam O’Connor',
-    resolutionNotes: 'Customer contacted via WhatsApp. Provided Gateway WPS sync steps. Field check booked if not resolved today.',
-    updatedAt: '2026-09-03T09:30:00Z'
-  },
-  {
-    id: 'tkt-2',
-    ticketNumber: 'TKT-2026-039',
-    projectId: 'proj-2',
-    projectCode: 'SOL-QLD-0891',
-    customerId: 'cnt-2',
-    customerName: 'Brooke Henderson',
-    customerPhone: '+61 422 789 331',
-    title: 'Quarterly Generation Audit Confirmation',
-    description: 'Customer requested verification of solar credits on Origin Energy bill matching our OpenSolar forecast.',
-    category: 'General Query',
-    priority: 'Low',
-    status: 'Resolved',
-    createdAt: '2026-08-10T11:00:00Z',
-    assignedTechnician: 'Chloe Gallagher',
-    resolutionNotes: 'Exported OpenSolar generation history report and reconciled with smart meter intervals. Generation 98.4% of forecast.',
-    updatedAt: '2026-08-12T14:20:00Z'
-  }
-];
+export const INITIAL_TICKETS: Ticket[] = [];
 
-export const INITIAL_MAINTENANCE: MaintenanceRecord[] = [
-  {
-    id: 'maint-1',
-    projectId: 'proj-2',
-    projectCode: 'SOL-QLD-0891',
-    customerId: 'cnt-2',
-    customerName: 'Brooke Henderson',
-    customerPhone: '+61 422 789 331',
-    customerEmail: 'brooke.h@outlook.com',
-    address: '18 Gympie Street, Chermside QLD 4032',
-    state: 'QLD',
-    installationDate: '2024-08-20',
-    nextPeriodicServiceDueDate: '2026-08-20', // OVERDUE by 2 weeks (2 years from 2024)
-    status: 'Overdue',
-    lastNotificationSentAt: '2026-08-25T10:00:00Z',
-    assignedTechnician: 'Liam O’Connor',
-    notes: 'System is past 2-year CEC health check threshold. Isolator seal inspection & thermal imaging recommended.'
-  },
-  {
-    id: 'maint-2',
-    projectId: 'proj-1',
-    projectCode: 'SOL-NSW-1042',
-    customerId: 'cnt-1',
-    customerName: 'Harrison Davies',
-    customerPhone: '+61 411 234 567',
-    customerEmail: 'harrison.davies@gmail.com',
-    address: '42 Albert Road, Strathfield NSW 2135',
-    state: 'NSW',
-    installationDate: '2026-08-25',
-    nextPeriodicServiceDueDate: '2028-08-25',
-    status: 'Pending',
-    notes: 'Brand new install. 2-year checkup logged for 2028.'
-  }
-];
+export const INITIAL_MAINTENANCE: MaintenanceRecord[] = [];
 
-export const INITIAL_SALES_ORDERS: SalesOrder[] = [
-  {
-    id: 'so-101',
-    orderNumber: 'SO-NSW-2026-091',
-    projectId: 'proj-1',
-    projectCode: 'SOL-NSW-1042',
-    customerName: 'Harrison Davies',
-    supplierName: 'Krannich Solar Wholesale AU',
-    status: 'Delivered to Site',
-    orderDate: '2026-08-15',
-    dispatchDate: '2026-08-20',
-    warehouseLocation: 'Sydney Wetherill Park Logistics Hub',
-    totalCostAud: 8420,
-    items: [
-      { id: 'soi-1', sku: 'AIKO-NEO-440', partNumber: 'AIKO-NEO-440', description: 'AIKO Neostar 440W All-Black Panels', quantity: 24, unitCostAud: 145, totalAud: 3480, totalCostAud: 3480 },
-      { id: 'soi-2', sku: 'SUNG-SH8.0RS', partNumber: 'SUNG-SH8.0RS', description: 'Sungrow SH8.0RS Hybrid Inverter', quantity: 1, unitCostAud: 1650, totalAud: 1650, totalCostAud: 1650 },
-      { id: 'soi-3', sku: 'SUNG-SBR096', partNumber: 'SUNG-SBR096', description: 'Sungrow 9.6kWh High Voltage Battery', quantity: 1, unitCostAud: 2800, totalAud: 2800, totalCostAud: 2800 },
-      { id: 'soi-4', sku: 'CLENERGY-ROOF', partNumber: 'CLENERGY-ROOF', description: 'Clenergy SolarRoof Mounting Kit 24P', quantity: 1, unitCostAud: 490, totalAud: 490, totalCostAud: 490 }
-    ]
-  },
-  {
-    id: 'so-102',
-    orderNumber: 'SO-QLD-2024-044',
-    projectId: 'proj-2',
-    projectCode: 'SOL-QLD-0891',
-    customerName: 'Brooke Henderson',
-    supplierName: 'Krannich Solar Wholesale AU',
-    status: 'Delivered to Site',
-    orderDate: '2024-08-05',
-    dispatchDate: '2024-08-10',
-    warehouseLocation: 'Brisbane Acacia Ridge Distribution Hub',
-    totalCostAud: 13900,
-    items: [
-      { id: 'soi-5', sku: 'JK-TIGER-440', partNumber: 'JK-TIGER-440', description: 'Jinko Tiger Neo 440W Panels', quantity: 30, unitCostAud: 135, totalAud: 4050, totalCostAud: 4050 },
-      { id: 'soi-6', sku: 'TSLA-PW3', partNumber: 'TSLA-PW3', description: 'Tesla Powerwall 3 13.5kWh + Backup Gateway 2', quantity: 1, unitCostAud: 9200, totalAud: 9200, totalCostAud: 9200 },
-      { id: 'soi-7', sku: 'GRACE-RACK-30', partNumber: 'GRACE-RACK-30', description: 'Grace Solar Tile Racking Kit 30P', quantity: 1, unitCostAud: 650, totalAud: 650, totalCostAud: 650 }
-    ]
-  },
-  {
-    id: 'so-103',
-    orderNumber: 'SO-NSW-2026-112',
-    projectId: 'proj-3',
-    projectCode: 'SOL-NSW-1055',
-    customerName: 'Marcus Sterling',
-    supplierName: 'Krannich Solar Wholesale AU',
-    status: 'Dispatched from Warehouse',
-    orderDate: '2026-08-28',
-    dispatchDate: '2026-08-29',
-    warehouseLocation: 'Sydney Wetherill Park Logistics Hub',
-    totalCostAud: 22100,
-    items: [
-      { id: 'soi-8', sku: 'TRINA-VERT-440', partNumber: 'TRINA-VERT-440', description: 'Trina Vertex S+ 440W Dual Glass Panels', quantity: 90, unitCostAud: 130, totalAud: 11700, totalCostAud: 11700 },
-      { id: 'soi-9', sku: 'FRONIUS-SYMO-20', partNumber: 'FRONIUS-SYMO-20', description: 'Fronius Symo 20.0-3-M Commercial Inverters', quantity: 2, unitCostAud: 4400, totalAud: 8800, totalCostAud: 8800 },
-      { id: 'soi-10', sku: 'SCHLETTER-COMM', partNumber: 'SCHLETTER-COMM', description: 'Schletter Commercial Metal Roof Clamps & Rails', quantity: 1, unitCostAud: 1600, totalAud: 1600, totalCostAud: 1600 }
-    ]
-  },
-  {
-    id: 'so-104',
-    orderNumber: 'SO-NSW-2026-118',
-    projectId: 'proj-4',
-    projectCode: 'SOL-NSW-1060',
-    customerName: 'Nathaniel Ward',
-    supplierName: 'Krannich Solar Wholesale AU',
-    status: 'Ordered',
-    orderDate: '2026-09-02',
-    dispatchDate: 'Pending dispatch',
-    warehouseLocation: 'Sydney Wetherill Park Logistics Hub',
-    totalCostAud: 3450,
-    items: [
-      { id: 'soi-11', sku: 'CSI-HIKU6-415', partNumber: 'CSI-HIKU6-415', description: 'Canadian Solar HiKu6 415W Panels', quantity: 16, unitCostAud: 115, totalAud: 1840, totalCostAud: 1840 },
-      { id: 'soi-12', sku: 'SUNG-SG5.0RS', partNumber: 'SUNG-SG5.0RS', description: 'Sungrow SG5.0RS Inverter', quantity: 1, unitCostAud: 1250, totalAud: 1250, totalCostAud: 1250 },
-      { id: 'soi-13', sku: 'CLENERGY-16P', partNumber: 'CLENERGY-16P', description: 'Clenergy Tile Racking Kit 16P', quantity: 1, unitCostAud: 360, totalAud: 360, totalCostAud: 360 }
-    ]
-  }
-];
+export const INITIAL_SALES_ORDERS: SalesOrder[] = [];
 
-export const INITIAL_INSTALL_ORDERS: InstallOrder[] = [
-  {
-    id: 'io-101',
-    orderNumber: 'INST-NSW-2026-081',
-    projectId: 'proj-1',
-    projectCode: 'SOL-NSW-1042',
-    customerName: 'Harrison Davies',
-    address: '42 Albert Road, Strathfield NSW 2135',
-    state: 'NSW',
-    systemSizeKw: 10.4,
-    roofType: 'Colorbond / Metal Sheet',
-    storeys: 'Single Storey',
-    specialRequirements: 'Single-storey colorbond. Easy side access. Sungrow battery mounted in shaded carport.',
-    status: 'Completed',
-    submittedRequirements: {
-      panelCount: 24,
-      inverterType: 'Sungrow SH8.0RS Hybrid',
-      batteryIncluded: true,
-      switchboardUpgradeRequired: false,
-      siteAccessInstructions: 'Driveway parking available. Gate code 4920.'
-    },
-    quotes: [
-      {
-        id: 'q-1',
-        subcontractorId: 'sub-1',
-        subcontractorName: 'Apex Solar Installations NSW',
-        amountAud: 2850,
-        estimatedDays: 1,
-        crewSize: 3,
-        notes: 'Full CEC team. Includes Sungrow battery commissioning and switchboard safety certificate.',
-        submittedAt: '2026-08-18',
-        status: 'Accepted'
-      },
-      {
-        id: 'q-2',
-        subcontractorId: 'sub-3',
-        subcontractorName: 'Metro Pro Solar Crew Sydney',
-        amountAud: 3100,
-        estimatedDays: 1.5,
-        crewSize: 2,
-        notes: 'Standard install quote including travel.',
-        submittedAt: '2026-08-19',
-        status: 'Rejected'
-      }
-    ],
-    awardedSubcontractorId: 'sub-1',
-    awardedAmountAud: 2850
-  },
-  {
-    id: 'io-102',
-    orderNumber: 'INST-QLD-2024-032',
-    projectId: 'proj-2',
-    projectCode: 'SOL-QLD-0891',
-    customerName: 'Brooke Henderson',
-    address: '18 Gympie Street, Chermside QLD 4032',
-    state: 'QLD',
-    systemSizeKw: 13.2,
-    roofType: 'Concrete Tile',
-    storeys: 'Two Storey',
-    specialRequirements: 'Two-storey tile roof. Tile ladder safety bracket and edge protection required.',
-    status: 'Completed',
-    submittedRequirements: {
-      panelCount: 30,
-      inverterType: 'Tesla Powerwall 3 Integrated',
-      batteryIncluded: true,
-      switchboardUpgradeRequired: true,
-      siteAccessInstructions: 'Rear yard access via side gate. Dog kept inside.'
-    },
-    quotes: [
-      {
-        id: 'q-3',
-        subcontractorId: 'sub-2',
-        subcontractorName: 'Gold Coast SunPower Tech QLD',
-        amountAud: 3400,
-        estimatedDays: 1,
-        crewSize: 4,
-        notes: 'Tesla certified installers with certified edge protection and SAA compliance.',
-        submittedAt: '2024-08-10',
-        status: 'Accepted'
-      }
-    ],
-    awardedSubcontractorId: 'sub-2',
-    awardedAmountAud: 3400
-  },
-  {
-    id: 'io-103',
-    orderNumber: 'INST-NSW-2026-095',
-    projectId: 'proj-3',
-    projectCode: 'SOL-NSW-1055',
-    customerName: 'Marcus Sterling',
-    address: '120 George St, Parramatta NSW 2150',
-    state: 'NSW',
-    systemSizeKw: 39.6,
-    roofType: 'Commercial Flat Roof',
-    storeys: 'Commercial Flat',
-    specialRequirements: 'High-voltage Ausgrid protection relay commissioning. Elevated boom lift required.',
-    status: 'Awarded',
-    submittedRequirements: {
-      panelCount: 90,
-      inverterType: 'Fronius Symo 20.0-3-M (x2)',
-      batteryIncluded: false,
-      switchboardUpgradeRequired: true,
-      siteAccessInstructions: 'Loading bay B after 7:00 AM. Site induction required with security.'
-    },
-    quotes: [
-      {
-        id: 'q-4',
-        subcontractorId: 'sub-1',
-        subcontractorName: 'Apex Solar Installations NSW',
-        amountAud: 7800,
-        estimatedDays: 2,
-        crewSize: 5,
-        notes: 'Commercial team with cherry picker & Ausgrid qualified supervisor.',
-        submittedAt: '2026-08-25',
-        status: 'Accepted'
-      }
-    ],
-    awardedSubcontractorId: 'sub-1',
-    awardedAmountAud: 7800
-  },
-  {
-    id: 'io-104',
-    orderNumber: 'INST-NSW-2026-102',
-    projectId: 'proj-4',
-    projectCode: 'SOL-NSW-1060',
-    customerName: 'Nathaniel Ward',
-    address: '15 Old Northern Rd, Castle Hill NSW 2154',
-    state: 'NSW',
-    systemSizeKw: 6.6,
-    roofType: 'Concrete Tile',
-    storeys: 'Single Storey',
-    specialRequirements: 'Standard 6.6kW residential single phase install.',
-    status: 'Quotes Received',
-    submittedRequirements: {
-      panelCount: 16,
-      inverterType: 'Sungrow SG5.0RS',
-      batteryIncluded: false,
-      switchboardUpgradeRequired: false,
-      siteAccessInstructions: 'Front driveway access.'
-    },
-    quotes: [
-      {
-        id: 'q-5',
-        subcontractorId: 'sub-1',
-        subcontractorName: 'Apex Solar Installations NSW',
-        amountAud: 1850,
-        estimatedDays: 1,
-        crewSize: 2,
-        notes: 'Standard single phase quote.',
-        submittedAt: '2026-09-02',
-        status: 'Pending'
-      },
-      {
-        id: 'q-6',
-        subcontractorId: 'sub-3',
-        subcontractorName: 'Metro Pro Solar Crew Sydney',
-        amountAud: 1750,
-        estimatedDays: 1,
-        crewSize: 2,
-        notes: 'Can complete within 48 hours of dispatch.',
-        submittedAt: '2026-09-03',
-        status: 'Pending'
-      }
-    ]
-  }
-];
+export const INITIAL_INSTALL_ORDERS: InstallOrder[] = [];
 
-export const INITIAL_REVIEWS: CustomerReview[] = [
-  {
-    id: 'rev-1',
-    customerId: 'cnt-2',
-    customerName: 'Brooke Henderson',
-    suburb: 'Chermside, Brisbane',
-    state: 'QLD',
-    rating: 5,
-    comment: 'Exceptional solar service! The team handled our Energex approvals seamlessly and the 13.2kW Tesla Powerwall install in Chermside was completed in one single day. Our quarterly electricity bill went from $980 to a $14 credit!',
-    systemDetails: '13.2kW Jinko Solar + Tesla Powerwall 3',
-    createdAt: '2024-09-10',
-    googleMyBusinessSynced: true,
-    published: true,
-    adminReply: 'Thank you Brooke! Delighted that your Powerwall system has eliminated your power bills. Great work by our QLD install crew.'
-  },
-  {
-    id: 'rev-2',
-    customerId: 'cnt-1',
-    customerName: 'Harrison Davies',
-    suburb: 'Strathfield, Sydney',
-    state: 'NSW',
-    rating: 5,
-    comment: 'From the OpenSolar design 3D simulation to the physical installation in Strathfield, everything was top tier. The BridgeSelect STC rebate discount was applied directly on the invoice so we saved over $3,800 immediately.',
-    systemDetails: '10.4kW AIKO Solar + Sungrow 9.6kWh Battery',
-    createdAt: '2026-08-28',
-    googleMyBusinessSynced: true,
-    published: true
-  }
-];
+export const INITIAL_REVIEWS: CustomerReview[] = [];
 
-export const INITIAL_SMS_MESSAGES: MessageMediaSMS[] = [
-  {
-    id: 'sms-1',
-    direction: 'outbound',
-    senderNumber: '+61 2 8311 4920',
-    recipientNumber: '+61 411 234 567',
-    contactId: 'cnt-1',
-    contactName: 'Harrison Davies',
-    projectId: 'proj-1',
-    messageText: 'Hi Harrison, your 10.4kW AIKO solar installation has been successfully commissioned today! Your STC rebate assignment is with BridgeSelect. Check your customer portal for your live monitoring link.',
-    timestamp: '2026-08-25T16:15:00Z',
-    status: 'delivered'
-  },
-  {
-    id: 'sms-2',
-    direction: 'inbound',
-    senderNumber: '+61 411 234 567',
-    recipientNumber: '+61 2 8311 4920',
-    contactId: 'cnt-1',
-    contactName: 'Harrison Davies',
-    projectId: 'proj-1',
-    messageText: 'Awesome, thanks Lachlan! The Sungrow app is already showing 7.8kW generation in Strathfield right now. Super impressed with David and the Apex crew.',
-    timestamp: '2026-08-25T16:22:00Z',
-    status: 'received'
-  },
-  {
-    id: 'sms-3',
-    direction: 'outbound',
-    senderNumber: '+61 7 3184 8921',
-    recipientNumber: '+61 422 789 331',
-    contactId: 'cnt-2',
-    contactName: 'Brooke Henderson',
-    projectId: 'proj-2',
-    messageText: 'Hi Brooke, notice from AusSolar: Your 13.2kW Tesla system in Chermside is due for its 2-year CEC health & isolator check. We have automated a booking slot for next Tuesday. Please reply YES to confirm.',
-    timestamp: '2026-08-25T10:00:00Z',
-    status: 'delivered'
-  }
-];
+export const INITIAL_SMS_MESSAGES: MessageMediaSMS[] = [];
 
-export const INITIAL_VOIP_CALLS: VoIPCallLog[] = [
-  {
-    id: 'call-1',
-    direction: 'outbound',
-    callerNumber: '+61 2 8311 4920',
-    recipientNumber: '+61 411 234 567',
-    contactName: 'Harrison Davies',
-    durationSeconds: 245,
-    timestamp: '2026-08-24T11:15:00Z',
-    status: 'answered'
-  },
-  {
-    id: 'call-2',
-    direction: 'inbound',
-    callerNumber: '+61 450 123 456',
-    recipientNumber: '+61 2 8311 4922',
-    contactName: 'David Miller (Apex Solar)',
-    durationSeconds: 180,
-    timestamp: '2026-08-25T08:30:00Z',
-    status: 'answered'
-  },
-  {
-    id: 'call-3',
-    direction: 'inbound',
-    callerNumber: '+61 401 555 123',
-    recipientNumber: '+61 2 8311 4920',
-    contactName: 'Nathaniel Ward',
-    durationSeconds: 0,
-    timestamp: '2026-09-02T15:40:00Z',
-    status: 'missed'
-  }
-];
+export const INITIAL_VOIP_CALLS: VoIPCallLog[] = [];
 
-export const INITIAL_LEAVE_REQUESTS: LeaveRequest[] = [
-  {
-    id: 'leave-1',
-    employeeId: 'u-1',
-    employeeName: 'Sarah Jenkins',
-    leaveType: 'Annual Leave',
-    startDate: '2026-09-14',
-    endDate: '2026-09-18',
-    days: 5,
-    reason: 'Family holiday on Sunshine Coast',
-    status: 'Pending',
-    createdAt: '2026-09-01'
-  },
-  {
-    id: 'leave-2',
-    employeeId: 'u-2',
-    employeeName: 'David Miller',
-    leaveType: 'Rostered Day Off (RDO)',
-    startDate: '2026-09-08',
-    endDate: '2026-09-08',
-    days: 1,
-    reason: 'Monthly scheduled CEC installer RDO',
-    status: 'Approved',
-    createdAt: '2026-08-25'
-  },
-  {
-    id: 'leave-3',
-    employeeId: 'u-3',
-    employeeName: 'Liam Chen',
-    leaveType: 'Sick & Carer Leave',
-    startDate: '2026-08-20',
-    endDate: '2026-08-21',
-    days: 2,
-    reason: 'Flu symptoms and medical consultation',
-    status: 'Approved',
-    createdAt: '2026-08-19'
-  }
-];
+export const INITIAL_LEAVE_REQUESTS: LeaveRequest[] = [];
 
 export const INITIAL_INTEGRATIONS: IntegrationConfig[] = [
   {
-    id: 'gmail',
-    name: 'Gmail Integration',
-    category: 'Customer Communication',
+    id: 'bridgeselect',
+    name: 'CER BridgeSelect STC Portal',
+    category: 'Regulatory & Rebates',
     enabled: true,
-    description: 'Two-way customer email synchronization and lead correspondence logging.',
+    description: 'Clean Energy Regulator STC small-scale technology certificate generation & verification.',
     lastSyncTime: 'Real-time'
-  },
-  {
-    id: 'google_calendar',
-    name: 'Google Calendar Sync',
-    category: 'Field Operations',
-    enabled: true,
-    description: 'Automated site survey, installation date, and maintenance appointment bookings.',
-    lastSyncTime: 'Real-time'
-  },
-  {
-    id: 'gmb',
-    name: 'Google My Business Reviews',
-    category: 'Reputation & Marketing',
-    enabled: true,
-    description: 'Directly sync and publish 5-star customer reviews to Google Maps listing.',
-    lastSyncTime: '15 mins ago'
   },
   {
     id: 'xero',
@@ -1774,14 +659,6 @@ export const INITIAL_INTEGRATIONS: IntegrationConfig[] = [
     enabled: true,
     description: 'Bi-directional invoice creation, milestone reconciliation, and contractor bill syncing.',
     lastSyncTime: '1 hour ago'
-  },
-  {
-    id: 'bridgeselect',
-    name: 'CER BridgeSelect STC Portal',
-    category: 'Regulatory & Rebates',
-    enabled: true,
-    description: 'Clean Energy Regulator STC small-scale technology certificate generation & verification.',
-    lastSyncTime: 'Real-time'
   },
   {
     id: 'opensolar',
@@ -1841,91 +718,7 @@ export const INITIAL_INTEGRATIONS: IntegrationConfig[] = [
   }
 ];
 
-export const INITIAL_REFERRAL_BONUSES: ReferralBonus[] = [
-  {
-    id: 'ref-1',
-    referralCode: 'REF-2026-001',
-    referredById: 'cnt-1',
-    referredByName: 'Harrison Davies',
-    referralContactId: 'cnt-5',
-    referralName: 'Nathaniel Ward',
-    address: '88 Old Northern Road, Castle Hill NSW 2154',
-    phone: '+61 401 555 123',
-    email: 'nathaniel.ward@gmail.com',
-    referralAmountAud: 500,
-    referralStatus: 'Install Scheduled',
-    linkedProjectId: 'proj-1',
-    linkedProjectCode: 'SOL-NSW-1042',
-    paymentStatus: 'Approved for Payment',
-    paymentReference: 'EFT-REF-89104',
-    notes: 'Neighbour referral for premium 13.2kW system with Tesla Powerwall 3. Approved per referral program terms.',
-    attachments: [
-      {
-        id: 'att-1',
-        name: 'Harrison_Davies_Referral_Claim.pdf',
-        sizeBytes: 124500,
-        uploadedAt: '2026-08-29',
-        fileType: 'pdf'
-      }
-    ],
-    createdAt: '2026-08-28'
-  },
-  {
-    id: 'ref-2',
-    referralCode: 'REF-2026-002',
-    referredById: 'cnt-2',
-    referredByName: 'Brooke Henderson',
-    referralContactId: 'cnt-1',
-    referralName: 'Harrison Davies',
-    address: '42 Albert Road, Strathfield NSW 2135',
-    phone: '+61 411 234 567',
-    email: 'harrison.davies@gmail.com',
-    referralAmountAud: 350,
-    referralStatus: 'Installation in Progress',
-    linkedProjectId: 'proj-1',
-    linkedProjectCode: 'SOL-NSW-1042',
-    paymentStatus: 'Paid via EFT',
-    paymentReference: 'CBA-EFT-992314',
-    notes: 'Family referral bonus paid directly to Brooke Henderson account via CommBank EFT.',
-    attachments: [
-      {
-        id: 'att-2',
-        name: 'CBA_EFT_Transfer_Receipt_Brooke_350.pdf',
-        sizeBytes: 88200,
-        uploadedAt: '2026-08-22',
-        fileType: 'pdf'
-      },
-      {
-        id: 'att-3',
-        name: 'Signed_Referral_Voucher.png',
-        sizeBytes: 342000,
-        uploadedAt: '2026-08-21',
-        fileType: 'image'
-      }
-    ],
-    createdAt: '2026-08-20',
-    paidAt: '2026-08-22'
-  },
-  {
-    id: 'ref-3',
-    referralCode: 'REF-2026-003',
-    referredById: 'cnt-5',
-    referredByName: 'Nathaniel Ward',
-    referralContactId: 'cnt-3',
-    referralName: 'Marcus Sterling',
-    address: '120 George St, Parramatta NSW 2150',
-    phone: '+61 433 912 445',
-    email: 'm.sterling@sterlingdistributors.com.au',
-    referralAmountAud: 1000,
-    referralStatus: 'Engineering & DNSP Approval',
-    linkedProjectId: 'proj-2',
-    linkedProjectCode: 'SOL-NSW-1043',
-    paymentStatus: 'Pending Review',
-    notes: 'Commercial 39.6kW referral. Bonus pending final DNSP grid approval from Ausgrid.',
-    attachments: [],
-    createdAt: '2026-09-01'
-  }
-];
+export const INITIAL_REFERRAL_BONUSES: ReferralBonus[] = [];
 
 export const INITIAL_SYSTEM_FEATURES: SystemFeatureConfig[] = [
   {
@@ -2048,7 +841,7 @@ export const INITIAL_SYSTEM_FEATURES: SystemFeatureConfig[] = [
   {
     id: 'integrations',
     name: 'Integrations Hub',
-    description: '12 active external connectors: VoIPLine, MessageMedia, Meta Ads, BridgeSelect STC, OpenSolar, Xero, SolarEdge, Sungrow, Fronius, Ausgrid.',
+    description: 'Active external connectors: VoIPLine Telecom, MessageMedia SMS, Meta Ads Lead Sync, BridgeSelect STC, OpenSolar, Xero, and Microsoft Teams.',
     category: 'Communications & Tools',
     enabled: true,
     showInSidebar: true,

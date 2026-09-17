@@ -11,10 +11,13 @@ import {
   User,
   Wrench,
   Filter,
-  FileText
+  FileText,
+  Plus,
+  Edit3
 } from 'lucide-react';
-import { SupportTicket, TicketStatus, ViewMode } from '../../types';
+import { Ticket, TicketStatus, ViewMode } from '../../types';
 import { ViewModeSwitcher } from '../common/ViewModeSwitcher';
+import { TicketEditModal } from '../tickets/TicketEditModal';
 
 export const TicketsView: React.FC = () => {
   const {
@@ -27,8 +30,22 @@ export const TicketsView: React.FC = () => {
   } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [resolutionText, setResolutionText] = useState('');
+
+  // Ticket Detail Edit Modal State
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
+
+  const handleOpenNewTicket = () => {
+    setEditingTicket(null);
+    setIsTicketModalOpen(true);
+  };
+
+  const handleOpenEditTicket = (tkt: Ticket) => {
+    setEditingTicket(tkt);
+    setIsTicketModalOpen(true);
+  };
 
   const filteredTickets = tickets.filter(t => {
     const matchesSearch =
@@ -44,6 +61,20 @@ export const TicketsView: React.FC = () => {
     updateTicketStatus(ticketId, status, resolutionText || undefined);
     setSelectedTicket(null);
     setResolutionText('');
+  };
+
+  const getPriorityBadgeStyle = (priority: string) => {
+    switch (priority) {
+      case 'High':
+      case 'Critical':
+      case 'Urgent':
+        return 'bg-rose-500/20 text-rose-300 border border-rose-500/30';
+      case 'Medium':
+        return 'bg-amber-500/20 text-amber-300 border border-amber-500/30';
+      case 'Low':
+      default:
+        return 'bg-[#bef264]/20 text-[#bef264] border border-[#bef264]/30';
+    }
   };
 
   const ticketStages: { id: TicketStatus; label: string; color: string }[] = [
@@ -72,6 +103,15 @@ export const TicketsView: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
           <ViewModeSwitcher currentMode={viewMode} onModeChange={setViewMode} />
+
+          <button
+            type="button"
+            onClick={handleOpenNewTicket}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold shadow-xs transition-all cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Raise Support Ticket</span>
+          </button>
 
           <span className="px-3 py-1.5 rounded-lg bg-[#1e1e1e] border border-[#2d2d2d] text-gray-300 shadow-xs">
             Open Tickets: <strong className="text-white">{tickets.filter(t => t.status !== 'Resolved' && t.status !== 'Closed').length}</strong>
@@ -156,11 +196,7 @@ export const TicketsView: React.FC = () => {
                             </h4>
                           </div>
                           <span
-                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                              tkt.priority === 'High'
-                                ? 'bg-rose-500/20 text-rose-300'
-                                : 'bg-gray-800 text-gray-300'
-                            }`}
+                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${getPriorityBadgeStyle(tkt.priority)}`}
                           >
                             {tkt.priority}
                           </span>
@@ -206,12 +242,23 @@ export const TicketsView: React.FC = () => {
                             </button>
                           </div>
 
-                          <button
-                            onClick={() => setSelectedTicket(tkt)}
-                            className="text-[10px] font-bold text-[#bef264] hover:underline"
-                          >
-                            Resolution Note
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditTicket(tkt)}
+                              className="text-[10px] font-bold text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1"
+                              title="Open full 3-column ticket details"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>Details</span>
+                            </button>
+                            <button
+                              onClick={() => setSelectedTicket(tkt)}
+                              className="text-[10px] font-bold text-[#bef264] hover:underline"
+                            >
+                              Resolution Note
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -269,11 +316,7 @@ export const TicketsView: React.FC = () => {
                       </td>
                       <td className="px-4 py-3">
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block ${
-                            tkt.priority === 'High'
-                              ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                              : 'bg-gray-800 text-gray-300 border border-gray-700'
-                          }`}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block ${getPriorityBadgeStyle(tkt.priority)}`}
                         >
                           {tkt.priority}
                         </span>
@@ -299,6 +342,14 @@ export const TicketsView: React.FC = () => {
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
+                            type="button"
+                            onClick={() => handleOpenEditTicket(tkt)}
+                            className="p-1.5 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 transition-colors"
+                            title="Edit Ticket Details"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
                             onClick={() => setIsVoipDialerOpen(true)}
                             className="p-1.5 rounded bg-[#262626] hover:bg-[#333] text-emerald-400 border border-[#333] transition-colors"
                             title="Call Customer"
@@ -314,7 +365,7 @@ export const TicketsView: React.FC = () => {
                           </button>
                           <button
                             onClick={() => setSelectedTicket(tkt)}
-                            className="px-2 py-1 rounded bg-[#bef264] hover:bg-[#a3e635] text-black text-[11px] font-bold shadow-xs transition-colors"
+                            className="px-2 py-1 rounded bg-[#bef264] hover:bg-[#a3e635] text-slate-950 text-[11px] font-bold shadow-xs transition-colors"
                           >
                             Resolve
                           </button>
@@ -387,11 +438,9 @@ export const TicketsView: React.FC = () => {
                     <span className="font-semibold text-gray-200">{tkt.category}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-gray-400 font-bold uppercase block">Priority:</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase block mb-0.5">Priority:</span>
                     <span
-                      className={`font-semibold ${
-                        tkt.priority === 'High' ? 'text-rose-400' : 'text-gray-200'
-                      }`}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded inline-block ${getPriorityBadgeStyle(tkt.priority)}`}
                     >
                       {tkt.priority} Priority
                     </span>
@@ -418,6 +467,14 @@ export const TicketsView: React.FC = () => {
               <div className="pt-3 flex items-center justify-between border-t border-[#262626]">
                 <div className="flex items-center gap-1.5">
                   <button
+                    type="button"
+                    onClick={() => handleOpenEditTicket(tkt)}
+                    className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-semibold flex items-center gap-1 transition-colors"
+                  >
+                    <Edit3 className="w-3 h-3 text-amber-400" />
+                    <span>Details</span>
+                  </button>
+                  <button
                     onClick={() => setIsVoipDialerOpen(true)}
                     className="px-2.5 py-1 rounded-lg bg-[#262626] hover:bg-[#333] text-emerald-400 border border-[#333] text-xs font-semibold flex items-center gap-1 transition-colors"
                   >
@@ -443,6 +500,18 @@ export const TicketsView: React.FC = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Ticket Detail 3-Column Edit Modal */}
+      {isTicketModalOpen && (
+        <TicketEditModal
+          isOpen={isTicketModalOpen}
+          onClose={() => {
+            setIsTicketModalOpen(false);
+            setEditingTicket(null);
+          }}
+          ticket={editingTicket}
+        />
       )}
 
       {/* Resolution Notes Modal */}
@@ -475,7 +544,7 @@ export const TicketsView: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleUpdateStatus(selectedTicket.id, 'Resolved')}
-                  className="px-4 py-1.5 bg-[#bef264] hover:bg-[#a3e635] text-black text-xs font-bold rounded-lg transition-colors"
+                  className="px-4 py-1.5 bg-[#bef264] hover:bg-[#a3e635] text-slate-950 text-xs font-bold rounded-lg transition-colors"
                 >
                   Mark as Resolved &amp; Update Customer
                 </button>

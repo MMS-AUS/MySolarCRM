@@ -23,64 +23,7 @@ export const DEFAULT_MESSAGEMEDIA_SETTINGS: MessageMediaIntegrationSettings = {
   lastSyncTime: 'Just now'
 };
 
-export const INITIAL_MESSAGEMEDIA_LOGS: MessageMediaSMSLogItem[] = [
-  {
-    id: 'smsg-1',
-    direction: 'outbound',
-    senderNumber: '+61 488 842 910',
-    recipientNumber: '+61 411 234 567',
-    contactName: 'Harrison Davies',
-    contactId: 'cnt-1',
-    projectId: 'proj-1',
-    messageText: 'Hi Harrison, our CEC electrical installation team has arrived on site at 42 Albert Road. Work has commenced.',
-    status: 'DELIVERED',
-    creditsUsed: 1,
-    timestamp: '2026-09-02T08:35:00Z',
-    deliveryLatencyMs: 142
-  },
-  {
-    id: 'smsg-2',
-    direction: 'inbound',
-    senderNumber: '+61 411 234 567',
-    recipientNumber: '+61 488 842 910',
-    contactName: 'Harrison Davies',
-    contactId: 'cnt-1',
-    projectId: 'proj-1',
-    messageText: 'Great thanks, side gate is unlocked and meter box is open on the left wall.',
-    status: 'RECEIVED',
-    creditsUsed: 0,
-    timestamp: '2026-09-02T08:38:12Z',
-    deliveryLatencyMs: 95
-  },
-  {
-    id: 'smsg-3',
-    direction: 'outbound',
-    senderNumber: '+61 488 842 910',
-    recipientNumber: '+61 433 912 445',
-    contactName: 'Marcus Sterling',
-    contactId: 'cnt-3',
-    projectId: 'proj-2',
-    messageText: 'Marcus, Ausgrid has issued preliminary engineering assessment for your 39.6kW commercial rooftop install.',
-    status: 'DELIVERED',
-    creditsUsed: 1,
-    timestamp: '2026-09-01T14:10:00Z',
-    deliveryLatencyMs: 120
-  },
-  {
-    id: 'smsg-4',
-    direction: 'outbound',
-    senderNumber: '+61 488 842 910',
-    recipientNumber: '+61 422 789 331',
-    contactName: 'Brooke Henderson',
-    contactId: 'cnt-2',
-    projectId: 'proj-3',
-    messageText: 'Hi Brooke, your 24-month CEC system safety inspection is scheduled for next Tuesday at 18 Gympie Street. Reply YES to confirm.',
-    status: 'DELIVERED',
-    creditsUsed: 1,
-    timestamp: '2026-08-28T10:00:00Z',
-    deliveryLatencyMs: 135
-  }
-];
+export const INITIAL_MESSAGEMEDIA_LOGS: MessageMediaSMSLogItem[] = [];
 
 export function getMessageMediaSettings(): MessageMediaIntegrationSettings {
   try {

@@ -1703,11 +1703,11 @@ const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
   projects,
   onSaved
 }) => {
-  const [contactId, setContactId] = useState(editingInvoice?.contactId || (contacts[0]?.id || 'cnt-1'));
+  const [contactId, setContactId] = useState(editingInvoice?.contactId || (contacts[0]?.id || ''));
   const [invoiceNumber, setInvoiceNumber] = useState(
     editingInvoice?.invoiceNumber || `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`
   );
-  const [reference, setReference] = useState(editingInvoice?.reference || 'SOL-NSW-1042');
+  const [reference, setReference] = useState(editingInvoice?.reference || '');
   const [date, setDate] = useState(editingInvoice?.date || new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState(
     editingInvoice?.dueDate || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]
@@ -1715,28 +1715,7 @@ const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
   const [status, setStatus] = useState<XeroInvoiceStatus>(editingInvoice?.status || 'AUTHORISED');
 
   const [lineItems, setLineItems] = useState<XeroLineItem[]>(
-    editingInvoice?.lineItems || [
-      {
-        id: 'li-1',
-        description: '10.0kW Solar PV Array & Inverter Turnkey Installation',
-        quantity: 1,
-        unitAmount: 14800,
-        accountCode: '200',
-        taxType: '10% GST on Income',
-        taxAmount: 1480,
-        lineAmount: 14800
-      },
-      {
-        id: 'li-2',
-        description: 'Less: Point of Sale Small-scale Technology Certificate (STC) Rebate (110 STCs)',
-        quantity: 1,
-        unitAmount: -4235,
-        accountCode: '215',
-        taxType: 'BAS Excluded',
-        taxAmount: 0,
-        lineAmount: -4235
-      }
-    ]
+    editingInvoice?.lineItems || []
   );
 
   const selectedContact = contacts.find(c => c.id === contactId);
@@ -2242,18 +2221,18 @@ const BillFormModal: React.FC<BillFormModalProps> = ({
   onSaved
 }) => {
   const [vendorName, setVendorName] = useState(
-    editingBill?.contactName || (subContractors[0]?.companyName || 'One Stop Warehouse (OSW) Australia')
+    editingBill?.contactName || (subContractors[0]?.companyName || '')
   );
   const [billNumber, setBillNumber] = useState(
-    editingBill?.billNumber || `BILL-OSW-${Math.floor(1000 + Math.random() * 9000)}`
+    editingBill?.billNumber || `BILL-${Math.floor(1000 + Math.random() * 9000)}`
   );
-  const [reference, setReference] = useState(editingBill?.reference || 'PO-SOL-NSW-1042');
+  const [reference, setReference] = useState(editingBill?.reference || '');
   const [date, setDate] = useState(editingBill?.date || new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState(
     editingBill?.dueDate || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
   );
   const [status, setStatus] = useState<XeroBillStatus>(editingBill?.status || 'AUTHORISED');
-  const [totalAmount, setTotalAmount] = useState(editingBill?.total || 4400);
+  const [totalAmount, setTotalAmount] = useState(editingBill?.total || 0);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();

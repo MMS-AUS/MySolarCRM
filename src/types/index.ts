@@ -518,21 +518,103 @@ export interface Project {
 
 export interface Ticket {
   id: string;
-  ticketNumber: string;
+  ticketNumber: string; // Auto-generated e.g. TKT-2026-042
   projectId: string;
   projectCode: string;
-  customerId: string;
-  customerName: string;
-  customerPhone: string;
-  title: string;
-  description: string;
-  category: 'Inverter Fault / Error Code' | 'WiFi Monitoring Drop' | 'Panel Damage / Shading' | 'Switchboard Trip' | 'Roof Leak Inspection' | 'General Query';
-  priority: 'Low' | 'Medium' | 'High' | 'Urgent';
-  status: 'New' | 'Assigned' | 'Technician Scheduled' | 'In Progress' | 'Resolved' | 'Closed';
+  customerId?: string;
+  customerName?: string;
+  customerPhone?: string;
+  title?: string;
+  description?: string;
+  category?: 'Inverter Fault / Error Code' | 'WiFi Monitoring Drop' | 'Panel Damage / Shading' | 'Switchboard Trip' | 'Roof Leak Inspection' | 'General Query' | string;
+  priority?: 'Low' | 'Medium' | 'High' | 'Urgent' | string;
+  status: 'New' | 'Assigned' | 'Technician Scheduled' | 'In Progress' | 'Resolved' | 'Closed' | string;
   createdAt: string;
   assignedTechnician?: string;
   resolutionNotes?: string;
   updatedAt: string;
+
+  // Detailed Left Panel Fields
+  installationProjectNo?: string; // Dropdown from Completed projects
+  installationDate?: string; // Date Picker - Auto Populate based on Project No.
+  firstName?: string; // Auto Populate
+  lastName?: string; // Auto Populate
+  contactNumber?: string; // Auto Populate
+  emailId?: string; // Auto Populate
+  address?: string; // Auto Populate
+  suburb?: string; // Auto Populate
+  postCode?: string; // Auto Populate
+  state?: string; // Auto Populate
+  phase?: string; // Auto Populate
+  storeyType?: string; // Auto Populate
+  issueRecorded?: string; // Dropdown managed from Settings
+  initialCheck?: string; // Dropdown managed from Settings
+  workRequired?: string; // Combo Box
+  issueResolutionStatus?: string; // Dropdown managed from Settings
+
+  // Existing Equipment (Auto populated based on Project No.)
+  noOfExistingInverters?: number | string;
+  existingInverterSerialNumber?: string; // Multiple serials comma/newline separated
+  existingInverterBrand?: string;
+  existingInverterModel?: string;
+  existingInverterSize?: string;
+  noOfExistingPanels?: number | string;
+  affectedPanelSerialNumber?: string; // Multiple serials
+  existingPanelBrand?: string;
+  existingPanelModel?: string;
+  existingPanelSize?: string;
+  affectedBatterySerialNumber?: string; // Multiple serials
+  existingBatteryBrand?: string;
+  existingBatteryModel?: string;
+  existingBatterySize?: string;
+  serviceIssueNotes?: string; // Combo Box
+
+  // Replaced Equipment
+  noOfReplacedInverters?: number | string;
+  replacedInverterSerialNumber?: string; // Multiple serials
+  replacedInverterBrand?: string;
+  replacedInverterModel?: string;
+  replacedInverterSize?: string;
+  noOfReplacedPanels?: number | string;
+  replacedPanelSerialNumber?: string; // Multiple serials
+  replacedPanelBrand?: string;
+  replacedPanelModel?: string;
+  replacedPanelSize?: string;
+  replacedBatterySerialNumber?: string; // Multiple serials
+  replacedBatteryBrand?: string;
+  replacedBatteryModel?: string;
+  replacedBatterySize?: string;
+
+  // Warranty Claim Section
+  warrantyClaimDate?: string; // Date Picker
+  warrantyClaimId?: string; // Text Field
+  warrantyClaimStatus?: string; // Dropdown managed from Settings
+  warrantyClaimInvoiceNumber?: string; // Text Field
+  warrantyClaimInvoiceAmount?: number | string; // Accounts format ($ AUD)
+  warrantyClaimInvoiceStatus?: string; // Dropdown managed from Settings
+  brandNotes?: string; // Combo Box
+
+  // Installer / Electrician / Sub-contractor Section
+  isInstallerSubContractor?: boolean; // Check Box
+  installerOrElectricianName?: string; // Dropdown from SubContractors or text
+  installerPhone?: string; // Auto populated or text
+  installerEmail?: string; // Auto populated or text
+  companyName?: string; // Auto populated or text
+  installerInvoiceDate?: string; // Date Picker
+  installerInvoiceNumber?: string; // Text Field
+  installerInvoiceAmount?: number | string; // Accounts format ($ AUD)
+  installerInvoiceStatus?: string; // Dropdown managed from Settings
+  installerElectricianNotes?: string; // Combo Box
+
+  // Resolution & Billing
+  issueResolutionDate?: string; // Date Picker
+  serviceHandler?: string; // Dropdown populated based on users in settings
+  serviceCharge?: number | string; // Accounts format ($ AUD)
+  totalServiceIssueAmount?: number | string; // Accounts format ($ AUD)
+
+  // Activities and attachments matching Lead/Project detail page pattern
+  activities?: LeadActivity[];
+  attachments?: LeadAttachment[];
 }
 
 export interface MaintenanceRecord {
@@ -667,7 +749,6 @@ export interface CustomerReview {
   comment: string;
   systemDetails: string; // e.g. "10.4kW AIKO Solar + 5kW Sungrow Inverter"
   createdAt: string;
-  googleMyBusinessSynced: boolean;
   published: boolean;
   adminReply?: string;
 }
@@ -771,6 +852,17 @@ export interface DynamicDropdownConfig {
   financeStatuses?: string[];
   stcPortals?: string[];
   stcStatuses?: string[];
+
+  // Ticket Management Dropdowns
+  ticketIssueRecordedOptions?: string[];
+  ticketInitialCheckOptions?: string[];
+  ticketWorkRequiredOptions?: string[];
+  ticketIssueResolutionStatuses?: string[];
+  ticketWarrantyClaimStatuses?: string[];
+  ticketWarrantyClaimInvoiceStatuses?: string[];
+  ticketBrandNotesPresets?: string[];
+  ticketServiceIssueNotesPresets?: string[];
+  ticketInstallerNotesPresets?: string[];
 }
 
 export type ViewMode = 'pipeline' | 'table' | 'grid';
@@ -819,23 +911,6 @@ export interface IntegrationConfig {
   configFields?: Record<string, string>;
 }
 
-export interface DomainVerificationRecord {
-  domain: string;
-  status: 'verified' | 'pending' | 'failed';
-  verificationToken: string;
-  verificationMethod: 'dns_txt' | 'google_workspace_sso' | 'meta_tag';
-  verifiedAt?: string;
-  lastChecked?: string;
-  dnsExpectedHost: string;
-  dnsExpectedType: 'TXT';
-  dnsExpectedValue: string;
-  dnsAlternativeHost?: string;
-  dnsCnameHost?: string;
-  dnsCnameValue?: string;
-  matchedAccount?: string;
-  notes?: string;
-}
-
 export interface PortalAddressConfig {
   portalType: 'customer' | 'installer';
   label: string;
@@ -863,32 +938,6 @@ export interface SystemPortalAddresses {
   installerPortal: PortalAddressConfig;
   enforceSeparateLogins: boolean;
   enableAutoRouting: boolean;
-}
-
-export interface GoogleWorkspaceIntegrationSettings {
-  expectedDomain: string;
-  requireCorporateDomain: boolean;
-  connectedAccountEmail?: string;
-  connectedAccountName?: string;
-  connectedAccountPhoto?: string;
-  lastVerifiedAt?: string;
-  gmail: {
-    senderDisplayName: string;
-    replyToEmail?: string;
-    defaultBcc?: string;
-    defaultProposalTemplate: string;
-    alwaysConfirmBeforeSend: boolean;
-    syncIntervalMinutes: number;
-  };
-  calendar: {
-    targetCalendar: 'primary' | 'solar_assessments' | 'solar_installations';
-    calendarName?: string;
-    defaultDurationMinutes: number;
-    defaultBufferMinutes: number;
-    defaultReminderMinutes: number;
-    emailReminderHours: number;
-    autoAddCustomerAsAttendee: boolean;
-  };
 }
 
 export interface LeaveRequest {
@@ -1395,87 +1444,6 @@ export interface TeamsDispatchedCard {
   dispatchedAt: string;
 }
 
-// 5. Google My Business (Google Business Profile) Settings Types
-export interface GmbReviewReply {
-  comment: string;
-  updateTime: string;
-  authorName: string;
-}
-
-export interface GmbReview {
-  reviewId: string;
-  reviewerName: string;
-  reviewerPhotoUrl?: string;
-  isVerifiedCustomer: boolean;
-  linkedProjectCode?: string;
-  starRating: number; // 1 to 5
-  comment: string;
-  createTime: string;
-  suburb: string;
-  state: 'NSW' | 'QLD' | 'VIC' | 'SA' | 'WA';
-  systemInstalled?: string;
-  reply?: GmbReviewReply;
-}
-
-export interface GmbPost {
-  id: string;
-  summary: string;
-  callToActionType: 'LEARN_MORE' | 'CALL' | 'BOOK' | 'GET_OFFER';
-  actionUrl: string;
-  imageUrl?: string;
-  offerCouponCode?: string;
-  status: 'PUBLISHED' | 'SCHEDULED' | 'DRAFT';
-  publishedAt: string;
-  viewsCount: number;
-  clicksCount: number;
-}
-
-export interface GoogleMyBusinessSettings {
-  accountId: string;
-  locationId: string;
-  businessName: string;
-  primaryCategory: string;
-  status: 'connected' | 'disconnected' | 'syncing' | 'error';
-  isGoogleVerified: boolean;
-  googleMapsPlaceId: string;
-  googleMapsListingUrl: string;
-  directReviewShortlink: string;
-  phoneAud: string;
-  websiteUrl: string;
-  streetAddress: string;
-  suburb: string;
-  state: string;
-  postcode: string;
-  serviceAreas: string[];
-  averageRating: number;
-  totalReviewsCount: number;
-  lastSyncAt: string;
-
-  // Review Automation Settings
-  enableAutoSyncReviews: boolean;
-  syncIntervalMinutes: number;
-  enableAutoReviewRequests: boolean;
-  requestTriggerEvent: 'INSTALL_COMPLETED' | 'STC_SUBMITTED' | 'INVOICE_PAID';
-  requestDelayHours: number;
-  requestChannel: 'SMS' | 'EMAIL' | 'BOTH';
-  smsTemplateText: string;
-  autoReplyTo5StarReviews: boolean;
-  autoReplyTemplate: string;
-  alertOnNegativeReview: boolean;
-  negativeReviewAlertEmail: string;
-}
-
-export interface GmbInsightMetrics {
-  period: string;
-  searchImpressions: number;
-  mapsViews: number;
-  websiteClicks: number;
-  directionRequests: number;
-  phoneCallClicks: number;
-  reviewRequestSentCount: number;
-  reviewConversionRatePercent: number;
-}
-
 // System Alerts & Personal Email Integration Types
 export interface SystemAlertTriggerConfig {
   newLeadAlert: boolean;
@@ -1489,7 +1457,7 @@ export interface SystemAlertTriggerConfig {
   customerPortalAlert: boolean;
 }
 
-export type EmailDeliveryMode = 'google_workspace' | 'custom_smtp' | 'webhook_gateway' | 'simulation_audit';
+export type EmailDeliveryMode = 'custom_smtp' | 'webhook_gateway' | 'simulation_audit';
 
 export interface PersonalEmailIntegrationConfig {
   deliveryMode: EmailDeliveryMode;
@@ -1503,8 +1471,6 @@ export interface PersonalEmailIntegrationConfig {
   webhookUrl: string;
   webhookApiKey: string;
   webhookPayloadType: 'standard' | 'sendgrid' | 'resend' | 'mailgun';
-  // Personal Google OAuth token
-  customGoogleAccessToken?: string;
   // Sender Identifiers
   senderEmail: string;
   senderName: string;
@@ -1526,7 +1492,7 @@ export interface OutboundEmailLog {
   snippet: string;
   bodyHtml: string;
   status: 'sent' | 'delivered' | 'failed' | 'simulated';
-  channel: 'gmail_api' | 'custom_smtp' | 'webhook_gateway' | 'system_relay';
+  channel: 'custom_smtp' | 'webhook_gateway' | 'system_relay';
   category: string;
   referenceId?: string;
   errorMessage?: string;
@@ -1555,7 +1521,7 @@ export interface EmailSendResult {
   messageId: string;
   threadId?: string;
   status: 'sent' | 'delivered' | 'failed' | 'simulated';
-  channel: 'gmail_api' | 'custom_smtp' | 'webhook_gateway' | 'system_relay';
+  channel: 'custom_smtp' | 'webhook_gateway' | 'system_relay';
   error?: string;
   timestamp: string;
 }
